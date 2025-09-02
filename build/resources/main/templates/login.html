@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8" />
+  <title>로그인 - TATO</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{--primary-color:#2563eb;--primary-hover:#1d4ed8;--background:#f8fafc;--text-primary:#1e293b;--text-secondary:#64748b;--border:#e2e8f0}
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{height:100%;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:var(--background);color:var(--text-primary)}
+    .header{height:64px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px}
+    .logo{font-size:24px;font-weight:800;color:var(--primary-color);text-decoration:none}
+    .main{min-height:calc(100vh - 64px);display:flex;align-items:center;justify-content:center;padding:24px}
+    .card{background:#fff;border-radius:16px;box-shadow:0 10px 15px -3px rgb(0 0 0 / .1);padding:36px;max-width:420px;width:100%}
+    .title{font-size:26px;font-weight:700;margin-bottom:6px}.sub{color:var(--text-secondary);font-size:14px;margin-bottom:22px}
+    .group{margin-bottom:16px}.label{display:block;margin-bottom:6px;font-weight:600}.input{width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:8px}
+    .input:focus{outline:none;border-color:var(--primary-color);box-shadow:0 0 0 3px rgb(37 99 235 / .12)}
+    .btn{width:100%;padding:12px;border:0;border-radius:8px;background:var(--primary-color);color:#fff;font-weight:600;cursor:pointer}
+    .btn:hover{background:var(--primary-hover)}
+    .helper{margin-top:18px;text-align:center;color:var(--text-secondary)} .helper a{color:var(--primary-color);text-decoration:none}
+    .alert{background:#fef2f2;color:#ef4444;border-left:4px solid #ef4444;padding:12px 14px;border-radius:8px;margin-bottom:16px}
+  </style>
+</head>
+<body>
+<header class="header">
+  <a th:href="@{/}" class="logo">TATO</a>
+  <nav><a th:href="@{/}" style="color:var(--text-secondary);text-decoration:none">홈으로</a></nav>
+</header>
+
+<main class="main">
+  <section class="card">
+    <h1 class="title">로그인</h1>
+    <p class="sub">TATO에서 도쿄 관광지를 탐색해보세요</p>
+
+    <!-- ✅ 회원가입 직후 안내 배너 -->
+    <div th:if="${param.registered}" class="alert" style="background:#f0f9ff;color:#2563eb;border-left-color:#2563eb">
+      회원가입이 완료되었습니다. 방금 만든 계정으로 로그인하세요.
+    </div>
+
+    <div th:if="${param.error}" class="alert">이메일 또는 비밀번호가 잘못되었습니다.</div>
+    <div th:if="${param.logout}" class="alert" style="background:#f0f9ff;color:#2563eb;border-left-color:#2563eb">
+      성공적으로 로그아웃되었습니다.
+    </div>
+
+    <form th:action="@{/login}" method="post">
+      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+      <div class="group">
+        <label class="label" for="email">이메일</label>
+        <!-- ✅ FlashAttribute 키 맞추기: justRegisteredEmail -->
+        <input id="email" name="email" type="email" class="input" placeholder="example@email.com"
+               th:value="${justRegisteredEmail}" required>
+      </div>
+      <div class="group">
+        <label class="label" for="password">비밀번호</label>
+        <input id="password" name="password" type="password" class="input" placeholder="비밀번호" required>
+      </div>
+      <button class="btn" type="submit">로그인</button>
+    </form>
+
+    <p class="helper">아직 계정이 없나요? <a th:href="@{/register}">회원가입</a></p>
+  </section>
+</main>
+</body>
+</html>

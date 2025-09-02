@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="utf-8" />
+  <title>즐겨찾기 - TATO</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link th:href="@{/css/base.css}" rel="stylesheet">
+
+  <style>
+    :root { --primary-color:#2563eb; --primary-hover:#1d4ed8; --background:#f8fafc;
+      --text-primary:#1e293b; --text-secondary:#64748b; --border:#e2e8f0; --card-shadow:0 1px 3px 0 rgb(0 0 0 / 0.1); }
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{min-height:100%;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:var(--background);color:var(--text-primary)}
+    .header{height:64px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:1000;box-shadow:var(--card-shadow)}
+    .logo{font-size:24px;font-weight:800;color:var(--primary-color);letter-spacing:-.5px;text-decoration:none}
+    .header-nav{display:flex;gap:12px;align-items:center}
+    .btn{padding:8px 14px;border:0;border-radius:8px;font-weight:500;cursor:pointer;transition:.2s;text-decoration:none;display:inline-block}
+    .btn-primary{background:var(--primary-color);color:#fff}.btn-primary:hover{background:var(--primary-hover)}
+    .btn-secondary{background:#f1f5f9;color:var(--text-primary)} .btn-secondary:hover{background:#e2e8f0}
+    .btn-danger{background:#ef4444;color:#fff} .btn-danger:hover{background:#dc2626}
+    .main{max-width:1200px;margin:0 auto;padding:24px}
+    .breadcrumb{margin-bottom:16px;color:var(--text-secondary);font-size:14px}
+    .breadcrumb a{color:inherit;text-decoration:none}.breadcrumb a:hover{color:var(--primary-color)}
+    .page-title{font-size:28px;font-weight:700;margin:6px 0 20px}
+    .stats{background:#fff;border-radius:16px;padding:20px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;box-shadow:var(--card-shadow)}
+    .stats h3{font-size:16px;font-weight:600;margin-bottom:4px}.stats strong{font-size:24px;color:var(--primary-color)}
+    .panel{background:#fff;border-radius:16px;padding:20px;box-shadow:var(--card-shadow)}
+    .panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+    .card{border:1px solid var(--border);border-radius:12px;overflow:hidden;background:#fff;transition:.2s;cursor:pointer}
+    .card:hover{border-color:var(--primary-color);transform:translateY(-2px);box-shadow:0 8px 24px -8px rgb(0 0 0 / .12)}
+    .thumb{height:160px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);display:flex;align-items:center;justify-content:center;color:#fff;font-size:44px}
+    .card-body{padding:14px}.title{font-weight:700;margin-bottom:6px}.meta{font-size:13px;color:var(--text-secondary);margin-bottom:10px}
+    .badge{background:#eff6ff;color:var(--primary-color);padding:2px 8px;border-radius:10px;font-size:12px}
+    .row{display:flex;align-items:center;gap:8px;justify-content:space-between}
+    @media (max-width:768px){.page-title{font-size:24px}.stats{flex-direction:column;gap:10px}}
+  </style>
+</head>
+<body>
+<header class="header">
+  <a th:href="@{/}" class="logo">TATO</a>
+  <nav class="header-nav">
+    <a th:href="@{/}" class="btn btn-secondary">홈</a>
+    <a th:href="@{/attractions}" class="btn btn-secondary">목록</a>
+    <span sec:authorize="isAnonymous()">
+      <a th:href="@{/login}" class="btn btn-primary">로그인</a>
+      <a th:href="@{/register}" class="btn btn-secondary">회원가입</a>
+    </span>
+    <span sec:authorize="isAuthenticated()">
+      <span th:text="${#authentication.principal?.nickname} ?: ${#authentication.name}">사용자</span>
+      <form th:action="@{/logout}" method="post" style="display:inline"><button class="btn btn-primary">로그아웃</button></form>
+    </span>
+  </nav>
+</header>
+
+<main class="main">
+  <nav class="breadcrumb"><a th:href="@{/}">홈</a> &gt; <strong>즐겨찾기</strong></nav>
+  <h1 class="page-title">내 즐겨찾기</h1>
+
+  <section class="stats">
+    <div><h3>총 즐겨찾기</h3><strong th:text="${favoritesCount}">0</strong></div>
+    <div><a th:href="@{/attractions}" class="btn btn-primary">관광지 더 보러가기</a></div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2 style="font-size:18px;font-weight:700;">찜한 관광지</h2>
+      <div style="color:var(--text-secondary);font-size:13px" th:if="${#lists.isEmpty(favorites)}">아직 찜이 없습니다</div>
+    </div>
+
+    <div class="grid" th:if="${!#lists.isEmpty(favorites)}">
+      <!-- 카드 반복 -->
+      <article class="card" th:each="fav : ${favorites}" th:onclick="|location.href='@{/attractions/{id}(id=${fav.attractionId})}'|">
+        <div class="thumb">⭐</div>
+        <div class="card-body">
+          <div class="title" th:text="${fav.name}">관광지명</div>
+          <div class="meta" th:text="${fav.address}">주소</div>
+          <div class="row">
+            <span class="badge" th:text="${fav.category}">카테고리</span>
+            <form th:action="@{/favorites/{id}(id=${fav.attractionId})}" method="post"
+                  th:object="${fav}" onsubmit="return confirm('찜을 해제할까요?')">
+              <input type="hidden" name="_method" value="delete"/>
+              <button type="submit" class="btn btn-danger">찜 해제</button>
+            </form>
+          </div>
+        </div>
+      </article>
+    </div>
+  </section>
+</main>
+</body>
+</html>

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head></head>
+<body>
+<header class="header" th:fragment="header">
+  <a th:href="@{/}" class="logo">TATO</a>
+  <nav class="header-nav">
+    <a th:href="@{/}" class="btn">홈</a>
+    <a th:href="@{/attractions}" class="btn">목록</a>
+
+    <span sec:authorize="isAnonymous()">
+      <a th:href="@{/login}" class="btn btn-primary">로그인</a>
+      <a th:href="@{/register}" class="btn">회원가입</a>
+    </span>
+
+    <span sec:authorize="isAuthenticated()">
+      <a th:href="@{/favorites}" class="btn">즐겨찾기</a>
+      <form th:action="@{/logout}" method="post" style="display:inline">
+  <input type="hidden" th:if="${_csrf != null}"
+         th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+  <button type="submit" class="btn">로그아웃</button>
+</form>
+    </span>
+  </nav>
+</header>
+</body>
+</html>

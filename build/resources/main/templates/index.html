@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="utf-8" />
+  <title>TATO - 도쿄 관광지 한눈에</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link th:href="@{/css/base.css}" rel="stylesheet">
+
+  <!-- Leaflet CSS/JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- MarkerCluster (선택) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
+  <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+
+  <!-- PapaParse for CSV -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
+  <style>
+    :root{
+      --primary:#2563eb; --primary-hover:#1d4ed8;
+      --bg:#f8fafc; --text:#1e293b; --muted:#64748b; --border:#e2e8f0;
+      --shadow:0 1px 3px 0 rgb(0 0 0 / .1);
+    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{height:100%;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text)}
+
+    /* Header */
+    .header{height:64px;background:#fff;border-bottom:1px solid var(--border);
+      display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:1000;box-shadow:var(--shadow)}
+    .logo{font-size:24px;font-weight:800;color:var(--primary-color);text-decoration:none}
+    .header-nav{display:flex;gap:10px;align-items:center}
+    .btn{padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:#fff;color:var(--text);text-decoration:none;font-size:14px}
+    .btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
+    .btn:hover{filter:brightness(0.98)}
+    .user{font-size:14px;color:var(--muted)}
+
+    /* Layout */
+    .main{display:grid;grid-template-columns:380px 1fr;height:calc(100vh - 64px)}
+    @media (max-width:900px){.main{grid-template-columns:1fr;grid-template-rows:320px 1fr}}
+
+    /* Sidebar */
+    .side{background:#fff;border-right:1px solid var(--border);overflow:auto}
+    .side-sec{padding:20px 24px;border-bottom:1px solid var(--border)}
+    .title{font-size:18px;font-weight:700;margin-bottom:6px}
+    .subtitle{color:var(--muted);font-size:13px}
+    .search{display:flex;gap:8px;margin-top:12px}
+    .input{flex:1;padding:10px 12px;border:1px solid var(--border);border-radius:8px}
+    .input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgb(37 99 235 / .12)}
+    .pill-wrap{display:flex;flex-wrap:wrap;gap:8px}
+    .pill{padding:6px 10px;border:1px solid var(--border);border-radius:999px;font-size:12px;background:#fff;cursor:pointer}
+    .pill.active{background:var(--primary);border-color:var(--primary);color:#fff}
+
+    .list{padding:18px 24px}
+    .hint{font-size:12px;color:var(--muted);margin-bottom:10px}
+    .card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:10px;cursor:pointer;transition:.15s;box-shadow:var(--shadow)}
+    .card:hover{transform:translateY(-1px);border-color:var(--primary)}
+    .name{font-weight:700;margin-bottom:4px}
+    .meta{font-size:12px;color:var(--muted)}
+    .badge{display:inline-block;margin-top:6px;background:#eff6ff;color:var(--primary);border-radius:999px;padding:2px 8px;font-size:11px}
+
+    /* Map */
+    .map-wrap{position:relative}
+    #map{width:100%;height:100%}
+    .map-tools{position:absolute;top:14px;right:14px;display:flex;flex-direction:column;gap:8px;z-index:1000}
+    .tool{background:#fff;border:1px solid var(--border);border-radius:8px;padding:8px}
+  </style>
+</head>
+<body>
+<header class="header">
+  <a th:href="@{/'/}" class="logo">TATO</a>
+  <nav class="header-nav">
+    <a th:href="@{/'/}" class="btn">홈</a>
+    <a th:href="@{/attractions}" class="btn">목록</a>
+
+    <!-- 로그인 전 -->
+    <span sec:authorize="isAnonymous()">
+      <a th:href="@{/login}" class="btn primary">로그인</a>
+      <a th:href="@{/register}" class="btn">회원가입</a>
+    </span>
+
+    <!-- 로그인 후 -->
+    <span sec:authorize="isAuthenticated()">
+      <a th:href="@{/favorites}" class="btn">즐겨찾기</a>
+      <span class="user" th:text="${username}">사용자</span>
+      <form th:action="@{/logout}" method="post" style="display:inline;">
+        <button type="submit" class="btn primary">로그아웃</button>
+      </form>
+    </span>
+  </nav>
+</header>
+
+<main class="main">
+  <!-- Sidebar -->
+  <aside class="side">
+    <section class="side-sec">
+      <div class="title">도쿄 관광지 탐색</div>
+      <div class="subtitle">지도에서 선택하거나, 아래 검색/필터를 사용해보세요.</div>
+      <div class="search">
+        <input id="q" class="input" type="text" placeholder="관광지/주소/카테고리 검색" onkeydown="if(event.key==='Enter') applyFilters()">
+        <button class="btn primary" onclick="applyFilters()">검색</button>
+      </div>
+    </section>
+
+    <section class="side-sec">
+      <div class="title" style="font-size:14px">카테고리</div>
+      <div id="catPills" class="pill-wrap"><!-- 동적 --></div>
+    </section>
+
+    <section class="list">
+      <div class="hint">목록을 클릭하면 지도에서 위치로 이동합니다</div>
+      <div id="listBox"><div class="meta">관광지 로딩 중…</div></div>
+    </section>
+  </aside>
+
+  <!-- Map -->
+  <section class="map-wrap">
+    <div id="map"></div>
+    <div class="map-tools">
+      <button class="tool" title="전체보기" onclick="resetView()">🌍</button>
+    </div>
+  </section>
+</main>
+
+<script>
+  // 전역 상태
+  let map, cluster, all = [], filtered = [], activeCat = null;
+
+  // 초기화
+  initMap(); loadCsv();
+
+  function initMap(){
+    map = L.map('map').setView([35.681236,139.767125], 11);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+      maxZoom:19, attribution:'&copy; OpenStreetMap contributors'
+    }).addTo(map);
+    cluster = L.markerClusterGroup({maxClusterRadius:50, chunkedLoading:true});
+    map.addLayer(cluster);
+  }
+  function resetView(){ map.setView([35.681236,139.767125], 11); }
+
+  function loadCsv(){
+    Papa.parse('/data/tokyo_attractions.csv', {
+      download: true,
+      header: true,
+      skipEmptyLines: true,
+      complete: (res)=>{
+        all = res.data
+                .filter(r => r.name && r.latitude && r.longitude)
+                .map(r => ({
+                  id: r.spot_id || r.id,
+                  name: (r.name||'').trim(),
+                  category: (r.category||'기타').trim(),
+                  ward: (r.ward||'').trim(),
+                  address: (r.address||'').trim(),
+                  lat: parseFloat(r.latitude), lng: parseFloat(r.longitude),
+                  description: (r.description||'').trim()
+                }))
+                .filter(a => !Number.isNaN(a.lat) && !Number.isNaN(a.lng));
+
+        initCategoryPills();
+        filtered = [...all];
+        renderMarkers();
+        renderList();
+      },
+      error: (e)=>{
+        document.getElementById('listBox').innerHTML =
+                '<div style="color:#ef4444">CSV를 불러오지 못했습니다. 경로/서버를 확인하세요.</div>';
+        console.error(e);
+      }
+    });
+  }
+
+  // 카테고리 필터
+  function initCategoryPills(){
+    const cats = [...new Set(all.map(a=>a.category))].filter(Boolean).sort();
+    const box  = document.getElementById('catPills');
+    box.innerHTML = cats.map(c => `<button class="pill" data-cat="${c}" onclick="toggleCat('${c}', event)">${c}</button>`).join('');
+  }
+  function toggleCat(cat, ev){
+    // active 토글
+    const pills = document.querySelectorAll('.pill');
+    pills.forEach(p=>p.classList.remove('active'));
+    if(activeCat === cat){ activeCat = null; }
+    else { activeCat = cat; ev.currentTarget.classList.add('active'); }
+    applyFilters();
+  }
+
+  // 필터/검색 적용
+  function applyFilters(){
+    const term = document.getElementById('q').value.trim().toLowerCase();
+    filtered = all.filter(a=>{
+      const okCat = !activeCat || a.category === activeCat;
+      const okTerm = !term || [a.name, a.address, a.category, a.ward].some(v => (v||'').toLowerCase().includes(term));
+      return okCat && okTerm;
+    });
+    renderMarkers(); renderList();
+
+    // 검색 시 첫 결과로 이동
+    if(term && filtered.length){
+      const f = filtered[0];
+      map.setView([f.lat, f.lng], 14);
+    }
+  }
+
+  // 마커/팝업
+  function renderMarkers(){
+    cluster.clearLayers();
+    filtered.forEach(a=>{
+      const m = L.marker([a.lat, a.lng]);
+      const html = `
+        <div style="min-width:220px">
+          <div style="font-weight:700;margin-bottom:6px">${escapeHtml(a.name)}</div>
+          ${a.category?`<div class="meta"><b>카테고리</b> ${escapeHtml(a.category)}</div>`:''}
+          ${a.address?`<div class="meta"><b>주소</b> ${escapeHtml(a.address)}</div>`:''}
+          ${a.description?`<div class="meta" style="margin-top:6px">${escapeHtml(a.description)}</div>`:''}
+          <div style="margin-top:10px;display:flex;gap:8px">
+            <a class="btn primary" href="attraction-detail.html?id=${encodeURIComponent(a.id)}">상세보기</a>
+            <button class="btn" onclick="fav('${a.id}')">❤️ 찜하기</button>
+          </div>
+        </div>`;
+      m.bindPopup(html);
+      m.on('click', ()=>{}); // 필요 시 추가
+      cluster.addLayer(m);
+    });
+  }
+
+  // 목록
+  function renderList(){
+    const box = document.getElementById('listBox');
+    if(!filtered.length){ box.innerHTML = '<div class="meta">결과가 없습니다</div>'; return; }
+    box.innerHTML = filtered.map(a=>`
+      <article class="card" onclick="goto('${a.id}')">
+        <div class="name">${escapeHtml(a.name)}</div>
+        <div class="meta">${escapeHtml(a.address || a.ward || '')}</div>
+        <span class="badge">${escapeHtml(a.category)}</span>
+      </article>
+    `).join('');
+  }
+
+  // 액션
+  function goto(id){ window.location.href = `attraction-detail.html?id=${encodeURIComponent(id)}`; }
+  function fav(id){
+    const key='tato:favs';
+    const cur = new Set(JSON.parse(localStorage.getItem(key) || '[]'));
+    cur.add(String(id));
+    localStorage.setItem(key, JSON.stringify([...cur]));
+    alert('즐겨찾기에 추가되었습니다.');
+  }
+
+  // util
+  function escapeHtml(s=''){
+    return s.replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;' }[m]));
+  }
+</script>
+</body>
+</html>

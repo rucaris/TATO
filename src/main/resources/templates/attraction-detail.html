@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="utf-8" />
+  <title th:text="${attraction?.name} + ' - TATO'">관광지 상세 - TATO</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link th:href="@{/css/base.css}" rel="stylesheet">
+
+  <!-- Leaflet (지도 표시용) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    :root{--primary-color:#2563eb;--primary-hover:#1d4ed8;--background:#f8fafc;--text-primary:#1e293b;--text-secondary:#64748b;--border:#e2e8f0;--card-shadow:0 1px 3px 0 rgb(0 0 0 / .1)}
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{min-height:100%;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:var(--background);color:var(--text-primary)}
+    .header{height:64px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:1000}
+    .logo{font-size:24px;font-weight:800;color:var(--primary-color);text-decoration:none}
+    .header-nav{display:flex;gap:12px;align-items:center}
+    .btn{padding:8px 14px;border:0;border-radius:8px;font-weight:600;cursor:pointer;text-decoration:none;display:inline-block}
+    .btn-primary{background:var(--primary-color);color:#fff}.btn-primary:hover{background:var(--primary-hover)}
+    .btn-secondary{background:#f1f5f9;color:var(--text-primary)} .btn-secondary:hover{background:#e2e8f0}
+    .wrap{max-width:1200px;margin:0 auto;padding:22px}
+    .breadcrumb{margin-bottom:16px;color:var(--text-secondary);font-size:14px}
+    .page-top{background:#fff;border-radius:16px;box-shadow:var(--card-shadow);padding:22px;margin-bottom:16px}
+    .title{font-size:28px;font-weight:800;margin-bottom:6px}
+    .badge{background:#eff6ff;color:var(--primary-color);padding:2px 8px;border-radius:10px;font-size:12px}
+    .rows{display:grid;grid-template-columns:1fr 380px;gap:18px}
+    .card{background:#fff;border-radius:16px;box-shadow:var(--card-shadow);padding:18px}
+    #map{height:300px;border-radius:12px;border:1px solid var(--border)}
+    .item{display:flex;gap:8px;color:var(--text-secondary);font-size:14px}
+    @media (max-width:900px){.rows{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<header class="header">
+  <a th:href="@{/}" class="logo">TATO</a>
+  <nav class="header-nav">
+    <a th:href="@{/}" class="btn btn-secondary">홈</a>
+    <a th:href="@{/attractions}" class="btn btn-secondary">목록</a>
+    <span sec:authorize="isAuthenticated()">
+      <form th:action="@{/favorites}" method="post" style="display:inline">
+        <input type="hidden" name="attractionId" th:value="${attraction.id}">
+        <button class="btn btn-primary" type="submit">❤찜하기</button>
+      </form>
+    </span>
+  </nav>
+</header>
+
+<main class="wrap" th:object="${attraction}">
+  <nav class="breadcrumb"><a th:href="@{/}">홈</a> &gt; <a th:href="@{/attractions}">목록</a> &gt; <strong th:text="*{name}">관광지명</strong></nav>
+
+  <section class="page-top">
+    <div class="title" th:text="*{name}">관광지명</div>
+    <div class="item"><span class="badge" th:text="*{category}">카테고리</span></div>
+  </section>
+
+  <section class="rows">
+    <article class="card">
+      <h3 style="margin-bottom:8px">소개</h3>
+      <p th:text="*{description} ?: '등록된 소개가 없습니다.'">소개</p>
+      <hr style="margin:16px 0;border:none;border-top:1px solid var(--border)">
+      <h3 style="margin-bottom:8px">주소</h3>
+      <p class="item">📍 <span th:text="*{address} ?: '주소 정보 없음'">주소</span></p>
+    </article>
+
+    <aside class="card">
+      <h3 style="margin-bottom:10px">위치</h3>
+      <div id="map" th:if="*{latitude} != null and *{longitude} != null"></div>
+      <p th:if="*{latitude} == null or *{longitude} == null" style="color:var(--text-secondary)">지오코딩 정보가 없어 지도를 표시할 수 없습니다.</p>
+
+      <hr style="margin:16px 0;border:none;border-top:1px solid var(--border)">
+      <h3 style="margin-bottom:8px">정보</h3>
+      <p class="item">🏷️ <span th:text="*{category}">카테고리</span></p>
+      <p class="item" th:if="*{ward}">🗺️ <span th:text="*{ward}">행정구</span></p>
+    </aside>
+  </section>
+</main>
+
+<script th:if="${attraction != null and attraction.latitude != null and attraction.longitude != null}">
+  const lat = /*[[${attraction.latitude}]]*/ 35.68;
+  const lng = /*[[${attraction.longitude}]]*/ 139.76;
+  const name = /*[[${attraction.name}]]*/ '관광지';
+
+  const map = L.map('map').setView([lat,lng], 15);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 19}).addTo(map);
+  L.marker([lat,lng]).addTo(map).bindPopup(name);
+</script>
+</body>
+</html>

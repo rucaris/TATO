@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="utf-8" />
+    <title>관광지 목록 - TATO</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link th:href="@{/css/base.css}" rel="stylesheet">
+
+    <!-- Papa Parse (CSV) -->
+    <script src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"></script>
+
+    <style>
+        :root{
+            --primary-color:#2563eb; --primary-hover:#1d4ed8;
+            --background:#f8fafc; --text-primary:#1e293b; --text-secondary:#64748b;
+            --border:#e2e8f0; --card-shadow:0 1px 3px 0 rgb(0 0 0 / 0.1);
+        }
+        *{margin:0;padding:0;box-sizing:border-box}
+        html,body{min-height:100%;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:var(--background);color:var(--text-primary)}
+
+        /* Header (index와 동일 톤) */
+        .header{height:64px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:1000;box-shadow:var(--card-shadow)}
+        .logo{font-size:24px;font-weight:800;color:var(--primary-color);letter-spacing:-.5px;text-decoration:none}
+        .header-nav{display:flex;gap:16px;align-items:center}
+        .btn{padding:8px 16px;border:none;border-radius:8px;font-weight:500;cursor:pointer;transition:.2s;text-decoration:none;display:inline-block;text-align:center;font-size:14px}
+        .btn-primary{background:var(--primary-color);color:#fff}.btn-primary:hover{background:var(--primary-hover)}
+        .btn-secondary{background:#f1f5f9;color:var(--text-primary)} .btn-secondary:hover{background:#e2e8f0}
+        .user-info{font-size:14px;color:var(--text-primary)}
+
+        /* Layout */
+        .main{max-width:1200px;margin:0 auto;padding:24px}
+        .page-title{font-size:32px;font-weight:700;margin-bottom:8px}
+        .page-sub{color:var(--text-secondary);margin-bottom:24px}
+
+        .filters{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+        .search-line{display:flex;gap:8px;margin-bottom:16px}
+        .search-input{flex:1;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px}
+        .search-input:focus{outline:none;border-color:var(--primary-color);box-shadow:0 0 0 3px rgb(37 99 235 / .1)}
+
+        .pill{padding:6px 12px;background:#f8fafc;border:1px solid var(--border);border-radius:20px;font-size:13px;cursor:pointer}
+        .pill.active{background:var(--primary-color);color:#fff;border-color:var(--primary-color)}
+
+        .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px}
+        .card{border:1px solid var(--border);border-radius:12px;overflow:hidden;background:#fff;box-shadow:var(--card-shadow);transition:.2s;cursor:pointer}
+        .card:hover{transform:translateY(-2px);border-color:var(--primary-color)}
+        .thumb{height:140px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);display:flex;align-items:center;justify-content:center;color:#fff;font-size:40px}
+        .card-body{padding:16px}
+        .name{font-weight:600;margin-bottom:6px}
+        .addr{color:var(--text-secondary);font-size:13px;line-height:1.4;margin-bottom:10px}
+        .meta{display:flex;justify-content:space-between;align-items:center}
+        .badge{background:#eff6ff;color:var(--primary-color);padding:4px 8px;border-radius:12px;font-size:12px;font-weight:500}
+
+        .empty{padding:60px 20px;text-align:center;color:var(--text-secondary)}
+        @media(max-width:768px){.page-title{font-size:24px}}
+    </style>
+</head>
+<body>
+<header class="header">
+    <a th:href="@{/}" class="logo">TATO</a>
+    <nav class="header-nav">
+        <a th:href="@{/}" class="btn btn-secondary">홈</a>
+        <a th:href="@{/attractions}" class="btn btn-secondary">목록</a>
+
+        <span sec:authorize="isAnonymous()">
+      <a th:href="@{/login}" class="btn btn-primary">로그인</a>
+      <a th:href="@{/register}" class="btn btn-secondary">회원가입</a>
+    </span>
+
+        <span sec:authorize="isAuthenticated()">
+      <a th:href="@{/favorites}" class="btn btn-secondary">즐겨찾기</a>
+      <span class="user-info" th:text="${#authentication.principal?.nickname} ?: ${#authentication.name}">사용자</span>
+      <form th:action="@{/logout}" method="post" style="display:inline;">
+        <button type="submit" class="btn btn-primary">로그아웃</button>
+      </form>
+    </span>
+    </nav>
+</header>
+
+<main class="main">
+    <h1 class="page-title">관광지 목록</h1>
+    <p class="page-sub">검색/필터로 원하는 장소를 빠르게 찾아보세요</p>
+
+    <div class="search-line">
+        <input id="q" class="search-input" placeholder="관광지 이름·주소·카테고리로 검색" onkeydown="event.key==='Enter'&&apply()">
+        <button class="btn btn-primary" onclick="apply()">검색</button>
+    </div>
+
+    <div id="catPills" class="filters"></div>
+
+    <section id="grid" class="grid"><div class="empty">불러오는 중…</div></section>
+</main>
+
+<script>
+    let all=[], filtered=[], active=null;
+
+    // CSV 읽기 (반드시 /data 밑으로 서비스됨 – 아래 2번 참고)
+    Papa.parse('/data/tokyo_attractions.csv', {
+        download:true, header:true, skipEmptyLines:true,
+        complete: ({data})=>{
+            all = data.filter(r=>r.name && r.latitude && r.longitude).map(r=>({
+                id: r.spot_id||r.id, name: r.name.trim(),
+                category: (r.category||'기타').trim(),
+                address: (r.address||'').trim(),
+                latitude: +r.latitude, longitude: +r.longitude
+            }));
+            initCats(); filtered=[...all]; render();
+        },
+        error: e=>{ document.getElementById('grid').innerHTML='<div class="empty" style="color:#ef4444">CSV를 불러오지 못했습니다</div>'; console.error(e); }
+    });
+
+    function initCats(){
+        const cats=[...new Set(all.map(a=>a.category))].filter(Boolean).sort();
+        const el=document.getElementById('catPills');
+        el.innerHTML=cats.map(c=>`<button class="pill" onclick="toggle('${c}', this)">${c}</button>`).join('');
+    }
+    function toggle(c,btn){
+        document.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
+        if(active===c){active=null;} else {active=c; btn.classList.add('active');}
+        apply();
+    }
+    function apply(){
+        const q=(document.getElementById('q').value||'').toLowerCase().trim();
+        filtered=all.filter(a=>{
+            const mc=!active || a.category===active;
+            const ms=!q || a.name.toLowerCase().includes(q) || a.address.toLowerCase().includes(q) || a.category.toLowerCase().includes(q);
+            return mc && ms;
+        });
+        render();
+    }
+    function render(){
+        const grid=document.getElementById('grid');
+        if(!filtered.length){ grid.innerHTML='<div class="empty">검색 결과가 없습니다</div>'; return;}
+        grid.innerHTML=filtered.map(a=>`
+      <article class="card" onclick="goDetail('${a.id}')">
+        <div class="thumb">📍</div>
+        <div class="card-body">
+          <div class="name">${escape(a.name)}</div>
+          ${a.address?`<div class="addr">${escape(a.address)}</div>`:''}
+          <div class="meta">
+            <span class="badge">${escape(a.category)}</span>
+            <a class="btn btn-secondary" href="#" onclick="event.stopPropagation(); goDetail('${a.id}')">상세보기</a>
+          </div>
+        </div>
+      </article>
+    `).join('');
+    }
+    function goDetail(id){
+        // 상세로 이동: /attractions/{id} 라우팅 예정 (백엔드 연결 시)
+        window.location.href = `/attractions/${encodeURIComponent(id)}`;
+    }
+    const escape = s => String(s).replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#39;'}[m]));
+</script>
+</body>
+</html>
