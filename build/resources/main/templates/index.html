@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-  <!-- MarkerCluster (선택) -->
+  <!-- MarkerCluster -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
   <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
@@ -77,13 +77,13 @@
     <a th:href="@{/'/}" class="btn">홈</a>
     <a th:href="@{/attractions}" class="btn">목록</a>
 
-    <!-- 로그인 전 -->
+    <!-- 로그인 전 사이트 모습 -->
     <span sec:authorize="isAnonymous()">
       <a th:href="@{/login}" class="btn primary">로그인</a>
       <a th:href="@{/register}" class="btn">회원가입</a>
     </span>
 
-    <!-- 로그인 후 -->
+    <!-- 로그인 후 사이트 -->
     <span sec:authorize="isAuthenticated()">
       <a th:href="@{/favorites}" class="btn">즐겨찾기</a>
       <span class="user" th:text="${username}">사용자</span>
@@ -220,7 +220,7 @@
           ${a.description?`<div class="meta" style="margin-top:6px">${escapeHtml(a.description)}</div>`:''}
           <div style="margin-top:10px;display:flex;gap:8px">
             <a class="btn primary" href="attraction-detail.html?id=${encodeURIComponent(a.id)}">상세보기</a>
-            <button class="btn" onclick="fav('${a.id}')">❤️ 찜하기</button>
+            <button class="btn" onclick="fav('${a.id}')">❤ 찜하기</button>
           </div>
         </div>`;
       m.bindPopup(html);

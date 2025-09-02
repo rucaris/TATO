@@ -1,19 +1,47 @@
-
 package com.tato.service;
+
+import com.tato.model.Attraction;
 import com.tato.model.Favorite;
+import com.tato.model.User;
+import com.tato.repository.AttractionRepository;
 import com.tato.repository.FavoriteRepository;
+import com.tato.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import java.util.List;
-import java.util.Optional;
-@Service @RequiredArgsConstructor
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@RequiredArgsConstructor
 public class FavoriteService {
-  private final FavoriteRepository repo;
-  public List<Favorite> myList(String username){ return repo.findByUsername(username); }
-  public boolean toggle(String username, Long attractionId){
-    var exist = repo.findByUsernameAndAttractionId(username, attractionId);
-    if(exist.isPresent()){ repo.delete(exist.get()); return false; }
-    repo.save(Favorite.builder().username(username).attractionId(attractionId).build());
-    return true;
+
+  private final FavoriteRepository favoriteRepository;
+  private final UserRepository userRepository;
+  private final AttractionRepository attractionRepository;
+
+  @Transactional
+  public boolean toggle(Long attractionId) {
+    String email = SecurityContextHolder.getContext().getAuthentication().getName();
+    User user = userRepository.findByEmail(email).orElseThrow();
+    Attraction attr = attractionRepository.findById(attractionId).orElseThrow();
+
+    var existing = favoriteRepository.findByUserIdAndAttractionId(user.getId(), attr.getId());
+    if (existing.isPresent()) {
+      favoriteRepository.delete(existing.get());
+      return false; // 해제됨
+    } else {
+      Favorite f = new Favorite();
+      f.setUser(user);
+      f.setAttraction(attr);
+      favoriteRepository.save(f);
+      return true;  // 찜됨
+    }
+  }
+
+  @Transactional(readOnly = true)
+  public boolean isFavorite(Long attractionId) {
+    String email = SecurityContextHolder.getContext().getAuthentication().getName();
+    User user = userRepository.findByEmail(email).orElseThrow();
+    return favoriteRepository.findByUserIdAndAttractionId(user.getId(), attractionId).isPresent();
   }
 }

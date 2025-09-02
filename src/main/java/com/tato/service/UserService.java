@@ -10,43 +10,27 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class UserService {
-
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
-    public User register(String email, String password, String name) {
-        System.out.println("=== UserService.register 호출 ===");
-        System.out.println("이메일: " + email);
-        System.out.println("이름: " + name);
-
-        // 이메일 중복 확인
+    public void register(String email, String rawPassword, String nickname) {
         if (userRepository.existsByEmail(email)) {
-            System.out.println("중복 이메일 발견!");
-            throw new DuplicateEmailException("이미 가입된 이메일입니다: " + email);
+            throw new DuplicateEmailException(email);
         }
-
-        System.out.println("중복 이메일 없음. 사용자 생성 중...");
-
-        // 사용자 생성 및 저장
-        User user = User.builder()
-                .email(email)
-                .password(passwordEncoder.encode(password)) // 비밀번호 암호화
-                .name(name)
-                .build();
-
-        System.out.println("User 엔티티 생성 완료");
-
-        User savedUser = userRepository.save(user);
-        System.out.println("데이터베이스 저장 완료! ID: " + savedUser.getId());
-
-        return savedUser;
+        User u = new User();
+        u.setEmail(email);
+        u.setPassword(passwordEncoder.encode(rawPassword)); // BCrypt 1회
+        u.setNickname(nickname);                            // 사용자가 입력한 닉네임
+        u.setRole("USER");                                  // 기본 권한
+        userRepository.save(u);
     }
 
+    // ✅ 컨트롤러에서 쓰는 메서드: 이메일로 사용자 조회
+    @Transactional(readOnly = true)
     public User findByEmail(String email) {
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + email));
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + email));
     }
 }

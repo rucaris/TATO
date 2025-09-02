@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+
 import java.security.Principal;
 
 @Controller
@@ -16,32 +17,24 @@ public class HomeController {
   @GetMapping("/")
   public String home(Model model, Principal principal) {
     if (principal != null) {
-      try {
-        var user = userService.findByEmail(principal.getName());
-        model.addAttribute("username", user.getName());
-        model.addAttribute("userEmail", principal.getName());
-      } catch (Exception e) {
-        model.addAttribute("username", principal.getName()); // 실패시 이메일 사용
-      }
+      var user = userService.findByEmail(principal.getName()); // 이메일로 조회
+      model.addAttribute("username", user.getNickname());      // ✅ nickname 사용
+      model.addAttribute("userEmail", user.getEmail());
     }
-    return "index"; // templates/index.html로 이동됨
+    return "index"; // templates/index.html
   }
 
   @GetMapping("/attractions")
   public String attractions() {
-    return "attractions"; // templates/attractions.html로 이동이요
+    return "attractions"; // templates/attractions.html
   }
 
   @GetMapping("/favorites")
   public String favorites(Model model, Principal principal) {
     if (principal != null) {
-      try {
-        var user = userService.findByEmail(principal.getName());
-        model.addAttribute("username", user.getName());
-      } catch (Exception e) {
-        model.addAttribute("username", principal.getName());
-      }
+      var user = userService.findByEmail(principal.getName()); // 이메일로 조회
+      model.addAttribute("username", user.getNickname());      // ✅ nickname 사용
     }
-    return "favorites"; // templates/favorites.html로 이동
+    return "favorites"; // templates/favorites.html
   }
 }

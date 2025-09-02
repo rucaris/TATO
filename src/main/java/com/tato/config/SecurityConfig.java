@@ -27,21 +27,24 @@ public class SecurityConfig {
                 .csrf(Customizer.withDefaults())
 
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/login", "/register",
-                                "/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
+                        .requestMatchers(
+                                "/",                      // (시연용) 메인도 공개하고 싶으면 유지
+                                "/login",
+                                "/register", "/register/**",   // ✅ 등록 페이지/POST 모두 공개
+                                "/css/**", "/js/**", "/images/**", "/webjars/**"
+                        ).permitAll()
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
-
                 .formLogin(form -> form
-                        .loginPage("/login")                 // 커스텀 로그인 페이지
-                        .loginProcessingUrl("/login")        // POST /login 인증 처리
-                        .usernameParameter("email")          // 폼 input name="email"
-                        .passwordParameter("password")       // 기본 "password"이지만 명시
-                        .failureUrl("/login?error=true")     // 실패 시
-                        .defaultSuccessUrl("/", true)        // 성공 시 항상 /
+                        .loginPage("/login")
+                        .loginProcessingUrl("/login")
+                        .usernameParameter("email")
+                        .passwordParameter("password")
+                        .failureUrl("/login?error=true")
+                        .defaultSuccessUrl("/", true)
                         .permitAll()
                 )
-
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/login?logout=true")
