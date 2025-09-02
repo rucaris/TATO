@@ -7,6 +7,6 @@ import lombok.*;
 public class Favorite {
   @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
-  private String username;    // 1234
+  private String username;
   private Long attractionId;
 }
