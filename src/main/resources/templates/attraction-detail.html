@@ -88,6 +88,15 @@
       <div class="card">
         <h3>리뷰</h3>
 
+        <!-- 🆕 메시지 표시 부분 -->
+        <div th:if="${success}" style="background:#d4edda; color:#155724; padding:10px; border-radius:5px; margin-bottom:15px;">
+          <span th:text="${success}">성공 메시지</span>
+        </div>
+
+        <div th:if="${error}" style="background:#f8d7da; color:#721c24; padding:10px; border-radius:5px; margin-bottom:15px;">
+          <span th:text="${error}">에러 메시지</span>
+        </div>
+
         <!-- 리뷰 작성 (로그인 사용자만) -->
         <div sec:authorize="isAuthenticated()" class="review-form">
           <h4>리뷰 작성하기</h4>

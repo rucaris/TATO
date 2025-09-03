@@ -88,6 +88,15 @@
       <div class="card">
         <h3>리뷰</h3>
 
+        <!-- 🆕 메시지 표시 부분 -->
+        <div th:if="${success}" style="background:#d4edda; color:#155724; padding:10px; border-radius:5px; margin-bottom:15px;">
+          <span th:text="${success}">성공 메시지</span>
+        </div>
+
+        <div th:if="${error}" style="background:#f8d7da; color:#721c24; padding:10px; border-radius:5px; margin-bottom:15px;">
+          <span th:text="${error}">에러 메시지</span>
+        </div>
+
         <!-- 리뷰 작성 (로그인 사용자만) -->
         <div sec:authorize="isAuthenticated()" class="review-form">
           <h4>리뷰 작성하기</h4>
@@ -141,7 +150,11 @@
     <div>
       <div class="card">
         <h3>위치</h3>
-        <div id="map" th:if="*{latitude} != null and *{longitude} != null"></div>
+        <div id="map"
+             th:if="*{latitude} != null and *{longitude} != null"
+             th:data-lat="${attraction.latitude}"
+             th:data-lng="${attraction.longitude}"
+             th:data-name="${attraction.name}"></div>
         <p th:if="*{latitude} == null or *{longitude} == null">지도 정보가 없습니다.</p>
       </div>
 
@@ -154,21 +167,46 @@
 </main>
 
 <!-- 지도 스크립트 -->
-<script th:if="${attraction != null and attraction.latitude != null and attraction.longitude != null}">
-  // 서버에서 받은 값 확인
-  console.log("서버 데이터 확인");
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const mapDiv = document.getElementById('map');
 
-  // 지도 생성 시도
-  try {
-    const map = L.map('map').setView([35.678749, 139.7721285], 15);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19
-    }).addTo(map);
-    L.marker([35.678749, 139.7721285]).addTo(map);
-    console.log("지도 생성 성공");
-  } catch (error) {
-    console.error("지도 생성 실패:", error);
-  }
+    if (mapDiv) {
+      // 강제로 현재 페이지 URL에서 ID 추출
+      const urlParts = window.location.pathname.split('/');
+      const attractionId = urlParts[urlParts.length - 1];
+
+      console.log("관광지 ID:", attractionId);
+
+      // ID별 좌표 하드코딩 (임시)
+      const coordinates = {
+        '1': [35.678749, 139.7721285, '아티존 미술관'],
+        '2': [35.641543, 139.7133962, '도쿄도 사진미술관'],
+        '3': [35.6397288, 139.7177804, '국립 자연 교육원'],
+        '4': [35.6620432, 139.6935718, '간제 노가쿠 극장'],
+        '5': [35.7016508, 139.7913627, '구라마에 물의관']
+      };
+
+      const coords = coordinates[attractionId];
+      if (coords) {
+        const [lat, lng, name] = coords;
+        console.log("사용할 좌표:", name, "위도:", lat, "경도:", lng);
+
+        const map = L.map('map').setView([lat, lng], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19
+        }).addTo(map);
+        L.marker([lat, lng]).addTo(map);
+        console.log("지도 생성 완료");
+      } else {
+        console.log("해당 ID의 좌표 없음, 기본 위치 사용");
+        const map = L.map('map').setView([35.681236, 139.767125], 11);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19
+        }).addTo(map);
+      }
+    }
+  });
 </script>
 
 <!-- 별점 스크립트 -->

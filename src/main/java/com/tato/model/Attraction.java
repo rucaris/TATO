@@ -15,4 +15,5 @@ public class Attraction {
   private Double longitude;
   @Column(length=2000) private String description;
   @Column(length=2000) private String descriptionKo;
+  private String imageUrl; //이미지 삽입 위해 추가했습니다.
 }

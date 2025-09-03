@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.security.Principal;
 
@@ -44,12 +45,20 @@ public class AttractionController {
   public String addReview(@PathVariable Long id,
                           @RequestParam int rating,
                           @RequestParam String content,
-                          Principal principal) {
+                          Principal principal,
+                          RedirectAttributes ra) {
     if (principal == null) {
       return "redirect:/login";
     }
 
-    reviewService.addReview(id, content, rating);
+    try {
+      reviewService.addReview(id, content, rating);
+      ra.addFlashAttribute("success", "리뷰가 등록되었습니다!");
+    } catch (RuntimeException e) {
+      // 🆕 메시지 수정
+      ra.addFlashAttribute("error", "한 장소에 대해 하나의 리뷰만 가능합니다.");
+    }
+
     return "redirect:/attractions/" + id;
   }
 }

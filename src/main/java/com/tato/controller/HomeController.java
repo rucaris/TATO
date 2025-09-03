@@ -32,8 +32,8 @@ public class HomeController {
   @GetMapping("/favorites")
   public String favorites(Model model, Principal principal) {
     if (principal != null) {
-      var user = userService.findByEmail(principal.getName()); // 이메일로 조회
-      model.addAttribute("username", user.getNickname());      // ✅ nickname 사용
+      var user = userService.findByEmail(principal.getName());
+      model.addAttribute("username", user.getNickname());
     }
     return "favorites"; // templates/favorites.html
   }
