@@ -6,85 +6,217 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link th:href="@{/css/base.css}" rel="stylesheet">
 
-  <!-- Leaflet (지도 표시용) -->
+  <!-- Leaflet -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <style>
-    :root{--primary-color:#2563eb;--primary-hover:#1d4ed8;--background:#f8fafc;--text-primary:#1e293b;--text-secondary:#64748b;--border:#e2e8f0;--card-shadow:0 1px 3px 0 rgb(0 0 0 / .1)}
-    *{margin:0;padding:0;box-sizing:border-box}
-    html,body{min-height:100%;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:var(--background);color:var(--text-primary)}
-    .header{height:64px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:1000}
-    .logo{font-size:24px;font-weight:800;color:var(--primary-color);text-decoration:none}
-    .header-nav{display:flex;gap:12px;align-items:center}
-    .btn{padding:8px 14px;border:0;border-radius:8px;font-weight:600;cursor:pointer;text-decoration:none;display:inline-block}
-    .btn-primary{background:var(--primary-color);color:#fff}.btn-primary:hover{background:var(--primary-hover)}
-    .btn-secondary{background:#f1f5f9;color:var(--text-primary)} .btn-secondary:hover{background:#e2e8f0}
-    .wrap{max-width:1200px;margin:0 auto;padding:22px}
-    .breadcrumb{margin-bottom:16px;color:var(--text-secondary);font-size:14px}
-    .page-top{background:#fff;border-radius:16px;box-shadow:var(--card-shadow);padding:22px;margin-bottom:16px}
-    .title{font-size:28px;font-weight:800;margin-bottom:6px}
-    .badge{background:#eff6ff;color:var(--primary-color);padding:2px 8px;border-radius:10px;font-size:12px}
-    .rows{display:grid;grid-template-columns:1fr 380px;gap:18px}
-    .card{background:#fff;border-radius:16px;box-shadow:var(--card-shadow);padding:18px}
-    #map{height:300px;border-radius:12px;border:1px solid var(--border)}
-    .item{display:flex;gap:8px;color:var(--text-secondary);font-size:14px}
-    @media (max-width:900px){.rows{grid-template-columns:1fr}}
+    .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    .card { background: white; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .title { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
+    .badge { background: #e3f2fd; color: #1976d2; padding: 4px 8px; border-radius: 4px; font-size: 12px; }
+    .grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+    #map { height: 250px; width: 100%; border-radius: 4px; }
+
+    /* 리뷰 스타일 */
+    .review-form { background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    .form-group { margin-bottom: 15px; }
+    .form-control { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+    .btn { padding: 8px 16px; background: #2196f3; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    .btn:hover { background: #1976d2; }
+
+    .review-item { border: 1px solid #eee; padding: 15px; margin: 10px 0; border-radius: 4px; }
+    .review-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
+    .stars { color: #ffc107; }
+    .rating-input { display: flex; gap: 5px; }
+    .star { font-size: 20px; cursor: pointer; color: #ddd; }
+    .star.active { color: #ffc107; }
+
+    .header { background: white; padding: 10px 20px; border-bottom: 1px solid #eee; }
+    .nav { display: flex; gap: 10px; align-items: center; justify-content: space-between; }
+    .nav a, .nav button { padding: 6px 12px; text-decoration: none; color: #333; border: 1px solid #ddd; border-radius: 4px; background: white; cursor: pointer; }
+    .logo { font-size: 20px; font-weight: bold; color: #2196f3; }
+
+    @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
 <header class="header">
-  <a th:href="@{/}" class="logo">TATO</a>
-  <nav class="header-nav">
-    <a th:href="@{/}" class="btn btn-secondary">홈</a>
-    <a th:href="@{/attractions}" class="btn btn-secondary">목록</a>
-    <span sec:authorize="isAuthenticated()">
-      <form th:action="@{/favorites}" method="post" style="display:inline">
-        <input type="hidden" name="attractionId" th:value="${attraction.id}">
-        <button class="btn btn-primary" type="submit">❤찜하기</button>
-      </form>
-    </span>
+  <nav class="nav">
+    <a th:href="@{/}" class="logo">TATO</a>
+    <div>
+      <a th:href="@{/}">홈</a>
+      <a th:href="@{/attractions}">목록</a>
+      <span sec:authorize="isAuthenticated()">
+        <span th:text="${nickname}">사용자</span>
+        <form th:action="@{/logout}" method="post" style="display:inline">
+          <button>로그아웃</button>
+        </form>
+      </span>
+      <span sec:authorize="isAnonymous()">
+        <a th:href="@{/login}">로그인</a>
+      </span>
+    </div>
   </nav>
 </header>
 
-<main class="wrap" th:object="${attraction}">
-  <nav class="breadcrumb"><a th:href="@{/}">홈</a> &gt; <a th:href="@{/attractions}">목록</a> &gt; <strong th:text="*{name}">관광지명</strong></nav>
+<main class="container" th:object="${attraction}">
+  <div class="card">
+    <h1 class="title" th:text="*{name}">관광지명</h1>
+    <div>
+      <span class="badge" th:text="*{category}">카테고리</span>
+      <span th:if="${averageRating > 0}" style="margin-left: 10px;">
+        평점: <span class="stars" th:text="${#strings.repeat('★', T(java.lang.Math).round(averageRating))}">★★★★★</span>
+        <span th:text="'(' + ${#numbers.formatDecimal(averageRating, 1, 1)} + ')'">4.5</span>
+      </span>
+    </div>
+  </div>
 
-  <section class="page-top">
-    <div class="title" th:text="*{name}">관광지명</div>
-    <div class="item"><span class="badge" th:text="*{category}">카테고리</span></div>
-  </section>
+  <div class="grid">
+    <div>
+      <div class="card">
+        <h3>소개</h3>
+        <p th:text="*{description} ?: '등록된 소개가 없습니다.'">소개</p>
+      </div>
 
-  <section class="rows">
-    <article class="card">
-      <h3 style="margin-bottom:8px">소개</h3>
-      <p th:text="*{description} ?: '등록된 소개가 없습니다.'">소개</p>
-      <hr style="margin:16px 0;border:none;border-top:1px solid var(--border)">
-      <h3 style="margin-bottom:8px">주소</h3>
-      <p class="item">📍 <span th:text="*{address} ?: '주소 정보 없음'">주소</span></p>
-    </article>
+      <div class="card">
+        <h3>주소</h3>
+        <p th:text="*{address} ?: '주소 정보 없음'">주소</p>
+      </div>
 
-    <aside class="card">
-      <h3 style="margin-bottom:10px">위치</h3>
-      <div id="map" th:if="*{latitude} != null and *{longitude} != null"></div>
-      <p th:if="*{latitude} == null or *{longitude} == null" style="color:var(--text-secondary)">지오코딩 정보가 없어 지도를 표시할 수 없습니다.</p>
+      <!-- 리뷰 섹션 -->
+      <div class="card">
+        <h3>리뷰</h3>
 
-      <hr style="margin:16px 0;border:none;border-top:1px solid var(--border)">
-      <h3 style="margin-bottom:8px">정보</h3>
-      <p class="item">🏷️ <span th:text="*{category}">카테고리</span></p>
-      <p class="item" th:if="*{ward}">🗺️ <span th:text="*{ward}">행정구</span></p>
-    </aside>
-  </section>
+        <!-- 리뷰 작성 (로그인 사용자만) -->
+        <div sec:authorize="isAuthenticated()" class="review-form">
+          <h4>리뷰 작성하기</h4>
+          <form th:action="@{/attractions/{id}/reviews(id=${attraction.id})}" method="post">
+            <div class="form-group">
+              <label>평점:</label>
+              <div class="rating-input">
+                <span class="star" data-rating="1">★</span>
+                <span class="star" data-rating="2">★</span>
+                <span class="star" data-rating="3">★</span>
+                <span class="star" data-rating="4">★</span>
+                <span class="star" data-rating="5">★</span>
+                <input type="hidden" name="rating" id="rating" value="5">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>내용:</label>
+              <textarea name="content" class="form-control" rows="3" placeholder="리뷰를 작성해주세요" required></textarea>
+            </div>
+            <button type="submit" class="btn">등록</button>
+          </form>
+        </div>
+
+        <!-- 로그인 안내 -->
+        <div sec:authorize="isAnonymous()" class="review-form" style="text-align: center;">
+          <p>리뷰 작성은 로그인 후 가능합니다.</p>
+          <a th:href="@{/login}" class="btn">로그인</a>
+        </div>
+
+        <!-- 리뷰 목록 -->
+        <div>
+          <h4 th:text="'리뷰 ' + ${#lists.size(reviews)} + '개'">리뷰 목록</h4>
+          <div th:if="${#lists.isEmpty(reviews)}" style="text-align: center; padding: 20px; color: #666;">
+            첫 리뷰를 작성해보세요!
+          </div>
+          <div th:each="review : ${reviews}" class="review-item">
+            <div class="review-header">
+              <strong th:text="${review.user.nickname}">작성자</strong>
+              <div>
+                <span class="stars" th:text="${#strings.repeat('★', review.rating)}">★★★★★</span>
+                <small th:text="${#temporals.format(review.createdAt, 'MM-dd HH:mm')}">날짜</small>
+              </div>
+            </div>
+            <p th:text="${review.content}">리뷰 내용</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 사이드바 -->
+    <div>
+      <div class="card">
+        <h3>위치</h3>
+        <div id="map"
+             th:if="*{latitude} != null and *{longitude} != null"
+             th:data-lat="${attraction.latitude}"
+             th:data-lng="${attraction.longitude}"
+             th:data-name="${attraction.name}"></div>
+        <p th:if="*{latitude} == null or *{longitude} == null">지도 정보가 없습니다.</p>
+      </div>
+
+      <div class="card">
+        <h3>정보</h3>
+        <p><strong>카테고리:</strong> <span th:text="*{category}">-</span></p>
+      </div>
+    </div>
+  </div>
 </main>
 
-<script th:if="${attraction != null and attraction.latitude != null and attraction.longitude != null}">
-  const lat = /*[[${attraction.latitude}]]*/ 35.68;
-  const lng = /*[[${attraction.longitude}]]*/ 139.76;
-  const name = /*[[${attraction.name}]]*/ '관광지';
+<!-- 지도 스크립트 -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const mapDiv = document.getElementById('map');
 
-  const map = L.map('map').setView([lat,lng], 15);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 19}).addTo(map);
-  L.marker([lat,lng]).addTo(map).bindPopup(name);
+    if (mapDiv) {
+      // 강제로 현재 페이지 URL에서 ID 추출
+      const urlParts = window.location.pathname.split('/');
+      const attractionId = urlParts[urlParts.length - 1];
+
+      console.log("관광지 ID:", attractionId);
+
+      // ID별 좌표 하드코딩 (임시)
+      const coordinates = {
+        '1': [35.678749, 139.7721285, '아티존 미술관'],
+        '2': [35.641543, 139.7133962, '도쿄도 사진미술관'],
+        '3': [35.6397288, 139.7177804, '국립 자연 교육원'],
+        '4': [35.6620432, 139.6935718, '간제 노가쿠 극장'],
+        '5': [35.7016508, 139.7913627, '구라마에 물의관']
+      };
+
+      const coords = coordinates[attractionId];
+      if (coords) {
+        const [lat, lng, name] = coords;
+        console.log("사용할 좌표:", name, "위도:", lat, "경도:", lng);
+
+        const map = L.map('map').setView([lat, lng], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19
+        }).addTo(map);
+        L.marker([lat, lng]).addTo(map);
+        console.log("지도 생성 완료");
+      } else {
+        console.log("해당 ID의 좌표 없음, 기본 위치 사용");
+        const map = L.map('map').setView([35.681236, 139.767125], 11);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19
+        }).addTo(map);
+      }
+    }
+  });
+</script>
+
+<!-- 별점 스크립트 -->
+<script>
+  document.querySelectorAll('.star').forEach((star, index) => {
+    star.addEventListener('click', () => {
+      const rating = parseInt(star.dataset.rating);
+      document.getElementById('rating').value = rating;
+
+      document.querySelectorAll('.star').forEach((s, i) => {
+        s.classList.toggle('active', i < rating);
+      });
+    });
+  });
+
+  // 초기값 5점
+  document.querySelectorAll('.star').forEach((s, i) => {
+    s.classList.toggle('active', i < 5);
+  });
 </script>
 </body>
 </html>

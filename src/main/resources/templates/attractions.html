@@ -147,7 +147,7 @@
     `).join('');
     }
     function goDetail(id){
-        // 상세로 이동: /attractions/{id} 라우팅 예정 (백엔드 연결 시)
+        // 수정: 올바른 경로로 변경
         window.location.href = `/attractions/${encodeURIComponent(id)}`;
     }
     const escape = s => String(s).replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#39;'}[m]));
