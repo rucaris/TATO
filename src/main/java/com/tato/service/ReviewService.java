@@ -24,15 +24,13 @@ public class ReviewService {
 
   @Transactional
   public Long addReview(Long attractionId, String content, int rating) {
-    // 현재 로그인한 사용자 이메일
     String email = SecurityContextHolder.getContext().getAuthentication().getName();
-
     User user = userRepository.findByEmail(email).orElseThrow();
     Attraction attraction = attractionRepository.findById(attractionId).orElseThrow();
 
     Review r = new Review();
-    r.setUser(user);                // FK
-    r.setAttraction(attraction);    // FK
+    r.setUser(user);
+    r.setAttraction(attraction);
     r.setContent(content);
     r.setRating(rating);
     r.setCreatedAt(LocalDateTime.now());
@@ -42,6 +40,18 @@ public class ReviewService {
 
   @Transactional(readOnly = true)
   public List<Review> list(Long attractionId) {
-    return reviewRepository.findAllByAttractionId(attractionId);
+    return reviewRepository.findAllByAttractionIdOrderByCreatedAtDesc(attractionId);
+  }
+
+  // 평균 평점 계산
+  @Transactional(readOnly = true)
+  public double getAverageRating(Long attractionId) {
+    List<Review> reviews = reviewRepository.findAllByAttractionId(attractionId);
+    if (reviews.isEmpty()) return 0.0;
+
+    return reviews.stream()
+            .mapToInt(Review::getRating)
+            .average()
+            .orElse(0.0);
   }
 }

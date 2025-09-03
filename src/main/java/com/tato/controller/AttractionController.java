@@ -2,7 +2,6 @@ package com.tato.controller;
 
 import com.tato.repository.UserRepository;
 import com.tato.service.AttractionService;
-import com.tato.service.FavoriteService;
 import com.tato.service.ReviewService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -17,27 +16,25 @@ public class AttractionController {
 
   private final AttractionService attractionService;
   private final ReviewService reviewService;
-  private final FavoriteService favoriteService;
-  private final UserRepository userRepository; // 닉네임 표시용
+  private final UserRepository userRepository;
 
   @GetMapping("/attractions/{id}")
   public String detail(@PathVariable Long id, Model model, Principal principal) {
     var attraction = attractionService.findById(id).orElse(null);
+    if (attraction == null) {
+      return "redirect:/attractions";
+    }
+
     model.addAttribute("attraction", attraction);
-
-    // 리뷰 목록: FK 기반 (user_id) 저장, 조회는 attractionId로
     model.addAttribute("reviews", reviewService.list(id));
+    model.addAttribute("averageRating", reviewService.getAverageRating(id));
 
-    // 찜 여부: 로그인 상태면 현재 사용자 기준으로 조회
-    boolean isFav = principal != null && favoriteService.isFavorite(id);
-    model.addAttribute("isFav", isFav);
-
-    // 상단에 닉네임 노출(로그인 상태일 때)
+    // 로그인한 사용자 닉네임
     if (principal != null) {
-      var nickname = userRepository.findByEmail(principal.getName())
-              .map(u -> u.getNickname())
-              .orElse(null);
-      model.addAttribute("nickname", nickname);
+      var user = userRepository.findByEmail(principal.getName()).orElse(null);
+      if (user != null) {
+        model.addAttribute("nickname", user.getNickname());
+      }
     }
 
     return "attraction-detail";
@@ -46,16 +43,13 @@ public class AttractionController {
   @PostMapping("/attractions/{id}/reviews")
   public String addReview(@PathVariable Long id,
                           @RequestParam int rating,
-                          @RequestParam String content) {
-    // 현재 로그인 사용자는 서비스 내부에서 SecurityContext로 확인
-    reviewService.addReview(id, content, rating);
-    return "redirect:/attractions/" + id;
-  }
+                          @RequestParam String content,
+                          Principal principal) {
+    if (principal == null) {
+      return "redirect:/login";
+    }
 
-  @PostMapping("/attractions/{id}/favorite")
-  public String toggleFavorite(@PathVariable Long id) {
-    // 현재 로그인 사용자는 서비스 내부에서 SecurityContext로 확인
-    favoriteService.toggle(id);
+    reviewService.addReview(id, content, rating);
     return "redirect:/attractions/" + id;
   }
 }
