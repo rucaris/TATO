@@ -28,7 +28,7 @@ public class ReviewService {
     User user = userRepository.findByEmail(email).orElseThrow();
     Attraction attraction = attractionRepository.findById(attractionId).orElseThrow();
 
-    // 🆕 코드로 중복 체크 (DB 제약조건 없이)
+    // 코드로 중복 체크
     List<Review> existingReviews = reviewRepository.findByUserIdAndAttractionId(user.getId(), attractionId);
     if (!existingReviews.isEmpty()) {
       throw new RuntimeException("이미 리뷰를 작성했습니다.");

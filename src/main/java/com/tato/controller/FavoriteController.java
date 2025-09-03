@@ -1,4 +1,4 @@
-package com.tato.controller;
+/*package com.tato.controller;
 
 import com.tato.service.FavoriteService;
 import com.tato.service.UserService;
@@ -130,4 +130,4 @@ public class FavoriteController {
 
         return response;
     }
-}
+} */

@@ -55,7 +55,7 @@ public class AttractionController {
       reviewService.addReview(id, content, rating);
       ra.addFlashAttribute("success", "리뷰가 등록되었습니다!");
     } catch (RuntimeException e) {
-      // 🆕 메시지 수정
+      // 2개 이상 올리면 메세지 뜨게 함
       ra.addFlashAttribute("error", "한 장소에 대해 하나의 리뷰만 가능합니다.");
     }
 
