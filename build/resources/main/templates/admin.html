@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 페이지</title>
+    <link rel="stylesheet" href="/css/base.css">
+    <style>
+    :root{
+      --primary:#2563eb; --primary-hover:#1d4ed8;
+      --bg:#f8fafc; --text:#1e293b; --muted:#64748b; --border:#e2e8f0;
+      --shadow:0 1px 3px 0 rgb(0 0 0 / .1);
+    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{height:100%;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text)}
+
+    /* Header */
+    .header{height:64px;background:#fff;border-bottom:1px solid var(--border);
+      display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-shadow:var(--shadow)}
+    .logo{font-size:24px;font-weight:800;color:var(--primary-color);text-decoration:none}
+    .header-nav{display:flex;gap:10px;align-items:center}
+    .btn{padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:#fff;color:var(--text);text-decoration:none;font-size:14px}
+    .btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
+    .btn:hover{filter:brightness(0.98)}
+    .user{font-size:14px;color:var(--muted)}
+
+    /* Layout */
+    .main{display:grid;grid-template-columns:380px 1fr;height:calc(100vh - 64px)}
+    @media (max-width:900px){.main{grid-template-columns:1fr;grid-template-rows:320px 1fr}}
+
+    /* Sidebar */
+    .side{background:#fff;border-right:1px solid var(--border);overflow:auto}
+    .side-sec{padding:20px 24px;border-bottom:1px solid var(--border)}
+    .title{font-size:18px;font-weight:700;margin-bottom:6px}
+    .subtitle{color:var(--muted);font-size:13px}
+    .search{display:flex;gap:8px;margin-top:12px}
+    .input{flex:1;padding:10px 12px;border:1px solid var(--border);border-radius:8px}
+    .input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgb(37 99 235 / .12)}
+    .pill-wrap{display:flex;flex-wrap:wrap;gap:8px}
+    .pill{padding:6px 10px;border:1px solid var(--border);border-radius:999px;font-size:12px;background:#fff;cursor:pointer}
+    .pill.active{background:var(--primary);border-color:var(--primary);color:#fff}
+
+    .list{padding:18px 24px}
+    .hint{font-size:12px;color:var(--muted);margin-bottom:10px}
+    .card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:10px;cursor:pointer;transition:.15s;box-shadow:var(--shadow)}
+    .card:hover{transform:translateY(-1px);border-color:var(--primary)}
+    .name{font-weight:700;margin-bottom:4px}
+    .meta{font-size:12px;color:var(--muted)}
+    .badge{display:inline-block;margin-top:6px;background:#eff6ff;color:var(--primary);border-radius:999px;padding:2px 8px;font-size:11px}
+
+    /* Map */
+    .map-wrap{position:relative}
+    #map{width:100%;height:100%}
+    .map-tools{position:absolute;top:14px;right:14px;display:flex;flex-direction:column;gap:8px;z-index:1000}
+    .tool{background:#fff;border:1px solid var(--border);border-radius:8px;padding:8px}
+
+    .admin-nav {
+      list-style: none;
+      padding: 0;
+    }
+    .admin-nav li {
+      margin-bottom: 10px;
+    }
+    .admin-nav li a {
+      display: block;
+      padding: 10px 15px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      text-decoration: none;
+      color: var(--text);
+      background-color: #fff;
+      transition: background-color 0.15s ease;
+    }
+    .admin-nav li a:hover {
+      background-color: var(--bg);
+    }
+  </style>
+</head>
+<body>
+    <div th:replace="fragments/admin-header :: header"></div>
+
+    <main class="main">
+        <aside class="side">
+            <section class="side-sec">
+                <div class="title">관리자 메뉴</div>
+                <nav>
+                    <ul class="admin-nav">
+                        <li><a th:href="@{/admin/users}">사용자 관리</a></li>
+                                                <li><a th:href="@{/admin/attractions}">관광지 관리</a></li>
+                        <li><a th:href="@{/admin/settings}">설정</a></li>
+                    </ul>
+                </nav>
+            </section>
+        </aside>
+        <section style="padding:20px 24px;">
+            <h1>관리자 페이지</h1>
+            <p>관광지 기능 설명</p>
+        </section>
+    </main>
+</body>
+</html>

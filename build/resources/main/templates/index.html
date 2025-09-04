@@ -74,9 +74,9 @@
 </head>
 <body>
 <header class="header">
-  <a th:href="@{/'/}" class="logo">TATO</a>
+  <a th:href="@{/}" class="logo">TATO</a>
   <nav class="header-nav">
-    <a th:href="@{/'/}" class="btn">홈</a>
+    <a th:href="@{/}" class="btn">홈</a>
     <a th:href="@{/attractions}" class="btn">목록</a>
 
     <!-- 로그인 전 사이트 모습 -->
@@ -88,6 +88,9 @@
     <!-- 로그인 후 사이트 -->
     <span sec:authorize="isAuthenticated()">
       <a th:href="@{/favorites}" class="btn">즐겨찾기</a>
+      <span sec:authorize="hasRole('ROLE_ADMIN')">
+        <a th:href="@{/admin}" class="btn">관리자</a>
+      </span>
       <span class="user" th:text="${username}">사용자</span>
       <form th:action="@{/logout}" method="post" style="display:inline;">
         <button type="submit" class="btn primary">로그아웃</button>

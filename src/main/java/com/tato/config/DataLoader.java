@@ -23,7 +23,7 @@ public class DataLoader implements CommandLineRunner {
     public void run(String... args) throws Exception {
         if (attractionRepository.count() > 0) {
             log.info("이미 관광지 데이터가 있습니다. 기존 데이터를 삭제하고 다시 로드합니다.");
-            attractionRepository.deleteAll(); // 기존 데이터 삭제
+            // attractionRepository.deleteAll();
         }
 
         log.info("CSV 파일에서 관광지 데이터를 로드합니다...");
