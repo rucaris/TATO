@@ -28,13 +28,4 @@ public class HomeController {
   public String attractions() {
     return "attractions"; // templates/attractions.html
   }
-
-  @GetMapping("/favorites")
-  public String favorites(Model model, Principal principal) {
-    if (principal != null) {
-      var user = userService.findByEmail(principal.getName());
-      model.addAttribute("username", user.getNickname());
-    }
-    return "favorites"; // templates/favorites.html
-  }
 }
