@@ -28,9 +28,9 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/",                      // (시연용) 메인도 공개하고 싶으면 유지
+                                "/",                      // 시연용 - 이거 없으면 로그인 안하면 메인페이지도 안가져요..
                                 "/login",
-                                "/register", "/register/**",   // ✅ 등록 페이지/POST 모두 공개
+                                "/register", "/register/**",   // 등록 페이지/POST 모두 공개
                                 "/css/**", "/js/**", "/images/**", "/webjars/**"
                         ).permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")

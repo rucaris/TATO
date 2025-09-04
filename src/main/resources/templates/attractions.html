@@ -15,45 +15,81 @@
         :root{
             --primary-color:#2563eb; --primary-hover:#1d4ed8;
             --background:#f8fafc; --text-primary:#1e293b; --text-secondary:#64748b;
-            --border:#e2e8f0; --card-shadow:0 1px 3px 0 rgb(0 0 0 / 0.1);
+            --border:#e2e8f0; --card-shadow:0 2px 4px rgba(0,0,0,0.1);
         }
         *{margin:0;padding:0;box-sizing:border-box}
         html,body{min-height:100%;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:var(--background);color:var(--text-primary)}
 
-        /* Header (index와 동일 톤) */
+        /* Header */
         .header{height:64px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:1000;box-shadow:var(--card-shadow)}
         .logo{font-size:24px;font-weight:800;color:var(--primary-color);letter-spacing:-.5px;text-decoration:none}
         .header-nav{display:flex;gap:16px;align-items:center}
         .btn{padding:8px 16px;border:none;border-radius:8px;font-weight:500;cursor:pointer;transition:.2s;text-decoration:none;display:inline-block;text-align:center;font-size:14px}
         .btn-primary{background:var(--primary-color);color:#fff}.btn-primary:hover{background:var(--primary-hover)}
         .btn-secondary{background:#f1f5f9;color:var(--text-primary)} .btn-secondary:hover{background:#e2e8f0}
-        .user-info{font-size:14px;color:var(--text-primary)}
 
         /* Layout */
-        .main{max-width:1200px;margin:0 auto;padding:24px}
+        .container{display:flex;min-height:calc(100vh - 64px)}
+
+        /* Sidebar */
+        .sidebar{width:300px;background:#fff;padding:24px;border-right:1px solid var(--border)}
+        .listings-count{font-size:48px;font-weight:bold;color:var(--primary-color);margin-bottom:4px}
+        .listings-text{color:var(--text-secondary);font-size:14px;margin-bottom:20px}
+        .view-all-btn{background:var(--primary-color);color:#fff;padding:10px 20px;border-radius:20px;border:none;cursor:pointer;font-weight:500;margin-bottom:30px}
+        .view-all-btn:hover{background:var(--primary-hover)}
+
+        .filter-title{font-size:18px;font-weight:600;margin-bottom:20px;color:var(--text-primary)}
+
+        /* Search */
+        .search-box{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;margin-bottom:20px}
+        .search-box:focus{outline:none;border-color:var(--primary-color)}
+
+        /* Category Filters */
+        .category-title{font-size:16px;font-weight:600;margin-bottom:12px;color:var(--text-primary)}
+        .filter-option{display:flex;align-items:center;margin-bottom:8px;cursor:pointer;padding:2px 0}
+        .filter-option input[type="checkbox"]{margin-right:8px;width:16px;height:16px}
+        .filter-option label{cursor:pointer;font-size:14px;color:var(--text-primary)}
+
+        /* Main Content */
+        .main-content{flex:1;padding:24px}
+        .content-header{margin-bottom:30px;text-align:center}
         .page-title{font-size:32px;font-weight:700;margin-bottom:8px}
-        .page-sub{color:var(--text-secondary);margin-bottom:24px}
+        .page-subtitle{color:var(--text-secondary);font-size:16px}
 
-        .filters{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px}
-        .search-line{display:flex;gap:8px;margin-bottom:16px}
-        .search-input{flex:1;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px}
-        .search-input:focus{outline:none;border-color:var(--primary-color);box-shadow:0 0 0 3px rgb(37 99 235 / .1)}
+        /* Grid */
+        .attractions-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:40px}
+        .attraction-card{background:#fff;border-radius:12px;overflow:hidden;box-shadow:var(--card-shadow);transition:.2s;cursor:pointer}
+        .attraction-card:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,0.15)}
 
-        .pill{padding:6px 12px;background:#f8fafc;border:1px solid var(--border);border-radius:20px;font-size:13px;cursor:pointer}
-        .pill.active{background:var(--primary-color);color:#fff;border-color:var(--primary-color)}
+        .card-image{height:200px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);display:flex;align-items:center;justify-content:center;color:#fff;font-size:48px}
 
-        .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px}
-        .card{border:1px solid var(--border);border-radius:12px;overflow:hidden;background:#fff;box-shadow:var(--card-shadow);transition:.2s;cursor:pointer}
-        .card:hover{transform:translateY(-2px);border-color:var(--primary-color)}
-        .thumb{height:140px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);display:flex;align-items:center;justify-content:center;color:#fff;font-size:40px}
-        .card-body{padding:16px}
-        .name{font-weight:600;margin-bottom:6px}
-        .addr{color:var(--text-secondary);font-size:13px;line-height:1.4;margin-bottom:10px}
-        .meta{display:flex;justify-content:space-between;align-items:center}
-        .badge{background:#eff6ff;color:var(--primary-color);padding:4px 8px;border-radius:12px;font-size:12px;font-weight:500}
+        .card-content{padding:16px}
+        .card-title{font-size:16px;font-weight:600;margin-bottom:8px;line-height:1.3}
+        .card-rating{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+        .stars{color:#fbbf24;font-size:14px}
+        .rating-text{font-size:14px;color:var(--text-secondary)}
+        .card-category{background:#eff6ff;color:var(--primary-color);padding:4px 8px;border-radius:12px;font-size:12px;display:inline-block}
 
-        .empty{padding:60px 20px;text-align:center;color:var(--text-secondary)}
-        @media(max-width:768px){.page-title{font-size:24px}}
+        /* Pagination */
+        .pagination{display:flex;justify-content:center;align-items:center;gap:8px;margin-top:32px}
+        .page-btn{padding:8px 12px;border:1px solid var(--border);background:#fff;color:var(--text-primary);border-radius:6px;cursor:pointer;font-size:14px}
+        .page-btn:hover{background:#f8fafc}
+        .page-btn.active{background:var(--primary-color);color:#fff;border-color:var(--primary-color)}
+        .page-btn:disabled{opacity:0.5;cursor:not-allowed}
+
+        /* Empty State */
+        .empty-state{text-align:center;padding:60px 20px;color:var(--text-secondary)}
+
+        /* Responsive */
+        @media (max-width:1200px){
+            .attractions-grid{grid-template-columns:repeat(2,1fr)}
+        }
+        @media (max-width:768px){
+            .container{flex-direction:column}
+            .sidebar{width:100%;padding:16px}
+            .attractions-grid{grid-template-columns:1fr}
+            .page-title{font-size:24px}
+        }
     </style>
 </head>
 <body>
@@ -64,93 +100,243 @@
         <a th:href="@{/attractions}" class="btn btn-secondary">목록</a>
 
         <span sec:authorize="isAnonymous()">
-      <a th:href="@{/login}" class="btn btn-primary">로그인</a>
-      <a th:href="@{/register}" class="btn btn-secondary">회원가입</a>
-    </span>
+            <a th:href="@{/login}" class="btn btn-primary">로그인</a>
+            <a th:href="@{/register}" class="btn btn-secondary">회원가입</a>
+        </span>
 
         <span sec:authorize="isAuthenticated()">
-      <a th:href="@{/favorites}" class="btn btn-secondary">즐겨찾기</a>
-      <span class="user-info" th:text="${#authentication.principal?.nickname} ?: ${#authentication.name}">사용자</span>
-      <form th:action="@{/logout}" method="post" style="display:inline;">
-        <button type="submit" class="btn btn-primary">로그아웃</button>
-      </form>
-    </span>
+            <a th:href="@{/favorites}" class="btn btn-secondary">즐겨찾기</a>
+            <span th:text="${username} ?: ${#authentication.name}">사용자</span>
+            <form th:action="@{/logout}" method="post" style="display:inline;">
+                <button type="submit" class="btn btn-primary">로그아웃</button>
+            </form>
+        </span>
     </nav>
 </header>
 
-<main class="main">
-    <h1 class="page-title">관광지 목록</h1>
-    <p class="page-sub">검색/필터로 원하는 장소를 빠르게 찾아보세요</p>
+<div class="container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="listings-count" id="listingsCount">54</div>
+        <div class="listings-text">listings</div>
+        <button class="view-all-btn" onclick="showAll()">View them all →</button>
 
-    <div class="search-line">
-        <input id="q" class="search-input" placeholder="관광지 이름·주소·카테고리로 검색" onkeydown="event.key==='Enter'&&apply()">
-        <button class="btn btn-primary" onclick="apply()">검색</button>
-    </div>
+        <h3 class="filter-title">Filters</h3>
 
-    <div id="catPills" class="filters"></div>
+        <!-- Search -->
+        <input id="searchInput" class="search-box" placeholder="관광지 이름 검색..." onkeyup="applyFilters()">
 
-    <section id="grid" class="grid"><div class="empty">불러오는 중…</div></section>
-</main>
+        <!-- Categories -->
+        <h4 class="category-title">카테고리</h4>
+        <div id="categoryFilters">
+            <!-- 동적 생성 -->
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="content-header">
+            <h1 class="page-title">도쿄 관광지</h1>
+            <p class="page-subtitle">검색/필터로 원하는 장소를 빠르게 찾아보세요</p>
+        </div>
+
+        <section id="attractionsGrid" class="attractions-grid">
+            <div class="empty-state">관광지를 불러오는 중...</div>
+        </section>
+
+        <div id="pagination" class="pagination" style="display:none;">
+            <!-- 동적 생성 -->
+        </div>
+    </main>
+</div>
 
 <script>
-    let all=[], filtered=[], active=null;
+    let allAttractions = [], filteredAttractions = [], currentPage = 1;
+    const itemsPerPage = 9;
+    let selectedCategories = new Set();
 
-    // CSV 읽기
-    Papa.parse('/data/tokyo_attractions.csv', {
-        download:true, header:true, skipEmptyLines:true,
-        complete: ({data})=>{
-            all = data.filter(r=>r.name && r.latitude && r.longitude).map(r=>({
-                id: r.spot_id||r.id, name: r.name.trim(),
-                category: (r.category||'기타').trim(),
-                address: (r.address||'').trim(),
-                latitude: +r.latitude, longitude: +r.longitude
-            }));
-            initCats(); filtered=[...all]; render();
+    //수동 이미지 ImageService랑 연동이 안돼서 우선적으로 수동으로 삽입했습니다...
+    const manualData = {
+        images: {
+            '1': '/images/attractions/architecture_img01.jpg',
+            '2': '/images/attractions/architecture_img02.jpg',
+            '3': '/images/attractions/architecture_img03.jpg',
+            '4': '/images/attractions/architecture_img04.jpg',
+            '5': '/images/attractions/architecture_img05.jpg',
+            '6': '/images/attractions/architecture_img06.jpg',
+            '7': '/images/attractions/architecture_img07.jpg',
+            '8': '/images/attractions/architecture_img08.jpg',
+            '9': '/images/attractions/architecture_img09.jpg'
         },
-        error: e=>{ document.getElementById('grid').innerHTML='<div class="empty" style="color:#ef4444">CSV를 불러오지 못했습니다</div>'; console.error(e); }
+    };
+
+    // CSV 데이터 로드
+    Papa.parse('/data/tokyo_attractions.csv', {
+        download: true,
+        header: true,
+        skipEmptyLines: true,
+        complete: (result) => {
+            allAttractions = result.data
+                .filter(r => r.name && r.latitude && r.longitude)
+                .map(r => ({
+                    id: r.spot_id || r.id,
+                    name: r.name.trim(),
+                    category: (r.category || '기타').trim(),
+                    address: (r.address || '').trim(),
+                    latitude: parseFloat(r.latitude),
+                    longitude: parseFloat(r.longitude)
+                }))
+                .filter(a => !isNaN(a.latitude) && !isNaN(a.longitude));
+
+            initializePage();
+        },
+        error: (error) => {
+            document.getElementById('attractionsGrid').innerHTML =
+                '<div class="empty-state" style="color:#ef4444">데이터를 불러오지 못했습니다</div>';
+            console.error('CSV 로딩 에러:', error);
+        }
     });
 
-    function initCats(){
-        const cats=[...new Set(all.map(a=>a.category))].filter(Boolean).sort();
-        const el=document.getElementById('catPills');
-        el.innerHTML=cats.map(c=>`<button class="pill" onclick="toggle('${c}', this)">${c}</button>`).join('');
+    function initializePage() {
+        setupCategoryFilters();
+        filteredAttractions = [...allAttractions];
+        updateListingsCount();
+        renderAttractions();
+        renderPagination();
     }
-    function toggle(c,btn){
-        document.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
-        if(active===c){active=null;} else {active=c; btn.classList.add('active');}
-        apply();
+
+    function setupCategoryFilters() {
+        const categories = [...new Set(allAttractions.map(a => a.category))].sort();
+        const container = document.getElementById('categoryFilters');
+
+        container.innerHTML = categories.map(category => `
+            <div class="filter-option">
+                <input type="checkbox" id="cat_${category}" value="${category}" onchange="toggleCategory('${category}')">
+                <label for="cat_${category}">${category}</label>
+            </div>
+        `).join('');
     }
-    function apply(){
-        const q=(document.getElementById('q').value||'').toLowerCase().trim();
-        filtered=all.filter(a=>{
-            const mc=!active || a.category===active;
-            const ms=!q || a.name.toLowerCase().includes(q) || a.address.toLowerCase().includes(q) || a.category.toLowerCase().includes(q);
-            return mc && ms;
+
+    function toggleCategory(category) {
+        if (selectedCategories.has(category)) {
+            selectedCategories.delete(category);
+        } else {
+            selectedCategories.add(category);
+        }
+        applyFilters();
+    }
+
+    function applyFilters() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+
+        filteredAttractions = allAttractions.filter(attraction => {
+            const matchesSearch = !searchTerm ||
+                attraction.name.toLowerCase().includes(searchTerm) ||
+                attraction.category.toLowerCase().includes(searchTerm) ||
+                attraction.address.toLowerCase().includes(searchTerm);
+
+            const matchesCategory = selectedCategories.size === 0 ||
+                selectedCategories.has(attraction.category);
+
+            return matchesSearch && matchesCategory;
         });
-        render();
+
+        currentPage = 1;
+        updateListingsCount();
+        renderAttractions();
+        renderPagination();
     }
-    function render(){
-        const grid=document.getElementById('grid');
-        if(!filtered.length){ grid.innerHTML='<div class="empty">검색 결과가 없습니다</div>'; return;}
-        grid.innerHTML=filtered.map(a=>`
-      <article class="card" onclick="goDetail('${a.id}')">
-        <div class="thumb">📍</div>
-        <div class="card-body">
-          <div class="name">${escape(a.name)}</div>
-          ${a.address?`<div class="addr">${escape(a.address)}</div>`:''}
-          <div class="meta">
-            <span class="badge">${escape(a.category)}</span>
-            <a class="btn btn-secondary" href="#" onclick="event.stopPropagation(); goDetail('${a.id}')">상세보기</a>
-          </div>
-        </div>
-      </article>
-    `).join('');
+
+    function updateListingsCount() {
+        document.getElementById('listingsCount').textContent = filteredAttractions.length;
     }
-    function goDetail(id){
-        // 수정: 올바른 경로로 변경
+
+    function renderAttractions() {
+        const container = document.getElementById('attractionsGrid');
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        const pageAttractions = filteredAttractions.slice(startIndex, endIndex);
+
+        if (pageAttractions.length === 0) {
+            container.innerHTML = '<div class="empty-state">검색 결과가 없습니다</div>';
+            return;
+        }
+
+        container.innerHTML = pageAttractions.map(attraction => {
+            // 평점은 고정으로, 임지ㅣㅁ는 동적으로 했습니다.
+            const rating = 5.0;
+            const imageUrl = manualData.images[attraction.id];
+            const stars = '★★★★★'; //우선 고정별점 적용
+
+            return `
+            <div class="attraction-card" onclick="goToDetail('${attraction.id}')">
+                <div class="card-image">
+                    ${imageUrl ?
+                `<img src="${imageUrl}" alt="${attraction.name}" style="width:100%;height:100%;object-fit:cover;border-radius:12px 12px 0 0;">` :
+                `<div style="width:100%;height:100%;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);display:flex;align-items:center;justify-content:center;color:#fff;font-size:48px;">이미지 삽입 예정</div>`
+            }
+                </div>
+                <div class="card-content">
+                    <h3 class="card-title">${escapeHtml(attraction.name)}</h3>
+                    <div class="card-rating">
+                        <span class="stars">${stars}</span>
+                        <span class="rating-text">${rating.toFixed(1)}</span>
+                    </div>
+                    <span class="card-category">${escapeHtml(attraction.category)}</span>
+                </div>
+            </div>
+        `;
+        }).join('');
+    }
+
+    function renderPagination() {
+        const totalPages = Math.ceil(filteredAttractions.length / itemsPerPage);
+        const container = document.getElementById('pagination');
+
+        if (totalPages <= 1) {
+            container.style.display = 'none';
+            return;
+        }
+
+        container.style.display = 'flex';
+
+        let html = `<button class="page-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="changePage(${currentPage - 1})">‹</button>`;
+
+        for (let i = 1; i <= totalPages; i++) {
+            html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
+        }
+
+        html += `<button class="page-btn" ${currentPage === totalPages ? 'disabled' : ''} onclick="changePage(${currentPage + 1})">›</button>`;
+
+        container.innerHTML = html;
+    }
+
+    function changePage(page) {
+        const totalPages = Math.ceil(filteredAttractions.length / itemsPerPage);
+        if (page >= 1 && page <= totalPages) {
+            currentPage = page;
+            renderAttractions();
+            renderPagination();
+            document.querySelector('.main-content').scrollTop = 0;
+        }
+    }
+
+    function goToDetail(id) {
         window.location.href = `/attractions/${encodeURIComponent(id)}`;
     }
-    const escape = s => String(s).replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#39;'}[m]));
+
+    function showAll() {
+        selectedCategories.clear();
+        document.getElementById('searchInput').value = '';
+        document.querySelectorAll('#categoryFilters input').forEach(cb => cb.checked = false);
+        applyFilters();
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
 </script>
 </body>
 </html>

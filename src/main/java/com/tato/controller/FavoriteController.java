@@ -1,6 +1,7 @@
 package com.tato.controller;
 
 import com.tato.service.FavoriteService;
+import com.tato.service.ImageService;
 import com.tato.service.UserService;
 import com.tato.repository.FavoriteRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,12 +21,11 @@ import java.util.stream.Collectors;
 @RequestMapping("/favorites")
 public class FavoriteController {
 
-    // 실제 서비스들 주입
     private final FavoriteService favoriteService;
     private final FavoriteRepository favoriteRepository;
     private final UserService userService;
+    private final ImageService imageService; // ✅ ImageService 주입
 
-    // 즐겨찾기 목록 페이지 (실제 데이터 조회)
     @GetMapping
     public String favoritesList(Model model, Principal principal) {
         if (principal == null) {
@@ -48,8 +48,9 @@ public class FavoriteController {
                                 fav.getAttraction().getAddress() : "주소 정보 없음");
                         item.put("category", fav.getAttraction().getCategory());
 
+                        // ✅ ImageService 사용
                         Long attractionId = fav.getAttraction().getId();
-                        String imageUrl = getImageUrl(attractionId);
+                        String imageUrl = imageService.getImageUrl(attractionId);
                         item.put("imageUrl", imageUrl);
 
                         return item;
@@ -71,7 +72,6 @@ public class FavoriteController {
         return "favorites";
     }
 
-    // 즐겨찾기 토글 (실제 서비스 호출)
     @PostMapping("/{attractionId}")
     @ResponseBody
     public Map<String, Object> toggleFavorite(@PathVariable Long attractionId, Principal principal) {
@@ -97,16 +97,5 @@ public class FavoriteController {
         }
 
         return response;
-    }
-    private String getImageUrl(Long attractionId) {
-        Map<Long, String> imageUrls = Map.of(
-                1L, "/images/attractions/architecture_img01.jpg",
-                2L, "/images/attractions/architecture_img02.jpg",
-                3L, "/images/attractions/architecture_img03.jpg",
-                4L, "/images/attractions/architecture_img04.jpg",
-                5L, "/images/attractions/architecture_img05.jpg"
-        );
-        return imageUrls.getOrDefault(attractionId,
-                "https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=300&h=200&fit=crop");
     }
 }

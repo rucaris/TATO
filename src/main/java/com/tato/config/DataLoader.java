@@ -111,8 +111,8 @@ public class DataLoader implements CommandLineRunner {
         }
     }
 
-    // 간단한 CSV 파싱 (쉼표 구분)
+    // CSV 파싱
     private String[] parseCSVLine(String line) {
-        return line.split(",", -1); // -1은 빈 필드도 포함
+        return line.split(",", -1); // 빈필드 포함
     }
 }
