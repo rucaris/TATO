@@ -1,8 +1,10 @@
 logging:
   level:
-    org.springframework.security: DEBUG
-    org.hibernate: DEBUG
-    org.springframework.orm.jpa: DEBUG
+    com.tato: DEBUG
+    org.springframework.security: INFO
+    org.hibernate: INFO
+    org.springframework.orm.jpa: INFO
+
 spring:
   thymeleaf:
     cache: false
@@ -15,7 +17,18 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false  #로그 중복 방지 때문에
     properties:
       hibernate:
         format_sql: true
+
+  mvc:
+    hiddenmethod:
+      filter:
+        enabled: true
+
+app:
+  data:
+    auto-load: true
+  admin:
+    auto-create: true

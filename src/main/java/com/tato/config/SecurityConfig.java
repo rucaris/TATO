@@ -23,15 +23,15 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // CSRF 활성(기본값). 템플릿 폼에 CSRF hidden input 포함되어 있어야 함.
                 .csrf(Customizer.withDefaults())
 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/",                      // 시연용 - 이거 없으면 로그인 안하면 메인페이지도 안가져요..
-                                "/login",
-                                "/register", "/register/**",   // 등록 페이지/POST 모두 공개
-                                "/css/**", "/js/**", "/images/**", "/webjars/**"
+                                "/",
+                                "/login", "/register", "/register/**",
+                                "/css/**", "/js/**", "/images/**", "/data/**", // ✅ CSV 파일 접근 추가
+                                "/webjars/**", "/favicon.ico",
+                                "/error" // 에러 페이지 접근 허용
                         ).permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()

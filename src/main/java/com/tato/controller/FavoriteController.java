@@ -1,10 +1,12 @@
 package com.tato.controller;
 
+import com.tato.service.AttractionService;
 import com.tato.service.FavoriteService;
 import com.tato.service.ImageService;
 import com.tato.service.UserService;
 import com.tato.repository.FavoriteRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Controller
 @RequiredArgsConstructor
 @RequestMapping("/favorites")
@@ -24,7 +27,8 @@ public class FavoriteController {
     private final FavoriteService favoriteService;
     private final FavoriteRepository favoriteRepository;
     private final UserService userService;
-    private final ImageService imageService; // ✅ ImageService 주입
+    private final ImageService imageService;
+    private final AttractionService attractionService;
 
     @GetMapping
     public String favoritesList(Model model, Principal principal) {
@@ -35,20 +39,17 @@ public class FavoriteController {
         try {
             var user = userService.findByEmail(principal.getName());
 
-            // 실제 즐겨찾기 데이터 조회
             var favorites = favoriteRepository.findAllByUserId(user.getId());
 
-            // 템플릿용 데이터 변환
             List<Map<String, Object>> favoriteList = favorites.stream()
                     .map(fav -> {
                         Map<String, Object> item = new HashMap<>();
-                        item.put("attractionId", fav.getAttraction().getId());
+                        item.put("attractionId", fav.getAttraction().getSpotId()); // spotId 사용
                         item.put("name", fav.getAttraction().getName());
                         item.put("address", fav.getAttraction().getAddress() != null ?
                                 fav.getAttraction().getAddress() : "주소 정보 없음");
                         item.put("category", fav.getAttraction().getCategory());
 
-                        // ✅ ImageService 사용
                         Long attractionId = fav.getAttraction().getId();
                         String imageUrl = imageService.getImageUrl(attractionId);
                         item.put("imageUrl", imageUrl);
@@ -63,7 +64,6 @@ public class FavoriteController {
 
         } catch (Exception e) {
             e.printStackTrace();
-            // 에러시 빈 데이터
             model.addAttribute("favorites", new ArrayList<>());
             model.addAttribute("favoritesCount", 0);
             model.addAttribute("error", "즐겨찾기를 불러오는데 실패했습니다.");
@@ -72,9 +72,9 @@ public class FavoriteController {
         return "favorites";
     }
 
-    @PostMapping("/{attractionId}")
+    @PostMapping("/{attractionIdOrSpotId}")
     @ResponseBody
-    public Map<String, Object> toggleFavorite(@PathVariable Long attractionId, Principal principal) {
+    public Map<String, Object> toggleFavorite(@PathVariable String attractionIdOrSpotId, Principal principal) {
         Map<String, Object> response = new HashMap<>();
 
         if (principal == null) {
@@ -84,16 +84,27 @@ public class FavoriteController {
         }
 
         try {
-            // 실제 FavoriteService 호출
-            boolean isFavorited = favoriteService.toggle(attractionId);
+            log.debug("즐겨찾기 토글 요청: {}", attractionIdOrSpotId);
+
+            // spotId 또는 id로 관광지 찾기
+            var attraction = attractionService.findByIdOrSpotId(attractionIdOrSpotId);
+            if (attraction == null) {
+                response.put("success", false);
+                response.put("message", "관광지를 찾을 수 없습니다.");
+                return response;
+            }
+
+            // 실제 DB ID로 즐겨찾기 처리
+            boolean isFavorited = favoriteService.toggle(attraction.getId());
             response.put("success", true);
             response.put("favorited", isFavorited);
             response.put("message", isFavorited ?
                     "즐겨찾기에 추가되었습니다!" : "즐겨찾기에서 제거되었습니다.");
+
         } catch (Exception e) {
+            log.error("즐겨찾기 처리 중 오류: {}", e.getMessage(), e);
             response.put("success", false);
-            response.put("message", "오류가 발생했습니다: " + e.getMessage());
-            e.printStackTrace();
+            response.put("message", "즐겨찾기 처리 중 오류가 발생했습니다: " + e.getMessage());
         }
 
         return response;
