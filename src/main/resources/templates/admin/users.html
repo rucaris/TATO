@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 - 사용자 관리</title>
+    <link rel="stylesheet" href="/css/base.css">
+    <style>
+        :root{
+            --primary:#2563eb; --primary-hover:#1d4ed8;
+            --bg:#f8fafc; --text:#1e293b; --muted:#64748b; --border:#e2e8f0;
+            --shadow:0 1px 3px 0 rgb(0 0 0 / .1);
+        }
+        *{margin:0;padding:0;box-sizing:border-box}
+        html,body{height:100%;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text)}
+
+        /* Header */
+        .header{height:64px;background:#fff;border-bottom:1px solid var(--border);
+            display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:1000;box-shadow:var(--shadow)}
+        .logo{font-size:24px;font-weight:800;color:var(--primary-color);text-decoration:none}
+        .header-nav{display:flex;gap:10px;align-items:center}
+        .btn{padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:#fff;color:var(--text);text-decoration:none;font-size:14px}
+        .btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
+        .btn:hover{filter:brightness(0.98)}
+        .user{font-size:14px;color:var(--muted)}
+
+        /* Layout */
+        .main{display:grid;grid-template-columns:380px 1fr;height:calc(100vh - 64px)}
+        @media (max-width:900px){.main{grid-template-columns:1fr;grid-template-rows:320px 1fr}}
+
+        /* Sidebar */
+        .side{background:#fff;border-right:1px solid var(--border);overflow:auto}
+        .side-sec{padding:20px 24px;border-bottom:1px solid var(--border)}
+        .title{font-size:18px;font-weight:700;margin-bottom:6px}
+        .subtitle{color:var(--muted);font-size:13px}
+        .search{display:flex;gap:8px;margin-top:12px}
+        .input{flex:1;padding:10px 12px;border:1px solid var(--border);border-radius:8px}
+        .input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgb(37 99 235 / .12)}
+        .pill-wrap{display:flex;flex-wrap:wrap;gap:8px}
+        .pill{padding:6px 10px;border:1px solid var(--border);border-radius:999px;font-size:12px;background:#fff;cursor:pointer}
+        .pill.active{background:var(--primary);border-color:var(--primary);color:#fff}
+
+        .list{padding:18px 24px}
+        .hint{font-size:12px;color:var(--muted);margin-bottom:10px}
+        .card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:10px;cursor:pointer;transition:.15s;box-shadow:var(--shadow)}
+        .card:hover{transform:translateY(-1px);border-color:var(--primary)}
+        .name{font-weight:700;margin-bottom:4px}
+        .meta{font-size:12px;color:var(--muted)}
+        .badge{display:inline-block;margin-top:6px;background:#eff6ff;color:var(--primary);border-radius:999px;padding:2px 8px;font-size:11px}
+
+        /* Map */
+        .map-wrap{position:relative}
+        #map{width:100%;height:100%}
+        .map-tools{position:absolute;top:14px;right:14px;display:flex;flex-direction:column;gap:8px;z-index:1000}
+        .tool{background:#fff;border:1px solid var(--border);border-radius:8px;padding:8px}
+
+        .admin-nav {
+            list-style: none;
+            padding: 0;
+        }
+        .admin-nav li {
+            margin-bottom: 10px;
+        }
+        .admin-nav li a {
+            display: block;
+            padding: 10px 15px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            text-decoration: none;
+            color: var(--text);
+            background-color: #fff;
+            transition: background-color 0.15s ease;
+        }
+        .admin-nav li a:hover {
+            background-color: var(--bg);
+        }
+
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .admin-table th,
+        .admin-table td {
+            border: 1px solid var(--border);
+            padding: 8px;
+            text-align: left;
+        }
+        .admin-table th {
+            background-color: var(--bg);
+            font-weight: 700;
+        }
+
+        .user-list-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .user-card {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: var(--shadow);
+            transition: transform 0.15s ease;
+            cursor: pointer;
+        }
+        .user-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--primary);
+        }
+        .user-card .user-email {
+            font-weight: 700;
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+        .user-card .user-nickname {
+            color: var(--muted);
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+        .user-card .user-role {
+            display: inline-block;
+            background: var(--primary);
+            color: #fff;
+            border-radius: 999px;
+            padding: 4px 10px;
+            font-size: 0.8em;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1001;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            border-radius: 12px;
+            width: 80%;
+            max-width: 500px;
+            box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+            animation-name: animatetop;
+            animation-duration: 0.4s
+        }
+        @-webkit-keyframes animatetop {
+            from {top:-300px; opacity:0}
+            to {top:15%; opacity:1}
+        }
+        @keyframes animatetop {
+            from {top:-300px; opacity:0}
+            to {top:15%; opacity:1}
+        }
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .modal-buttons {
+            margin-top: 20px;
+            text-align: right;
+        }
+        .modal-buttons .btn {
+            margin-left: 10px;
+        }
+        .modal-buttons select {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+<div th:replace="fragments/admin-header :: header"></div>
+
+<main class="main">
+    <aside class="side">
+        <section class="side-sec">
+            <div class="title">관리자 메뉴</div>
+            <nav>
+                <ul class="admin-nav">
+                    <li><a th:href="@{/admin/users}">사용자 관리</a></li>
+                    <li><a th:href="@{/admin/content}">관광지 관리</a></li>
+                    <li><a th:href="@{/admin/settings}">설정</a></li>
+                </ul>
+            </nav>
+        </section>
+    </aside>
+    <section style="padding:20px 24px;">
+        <h1>사용자 관리</h1>
+        <div class="user-list-container">
+            <div class="user-card" th:each="user : ${users}" th:data-user-id="${user.id}">
+                <div class="user-email" th:text="${user.email}"></div>
+                <div class="user-nickname" th:text="${user.nickname}"></div>
+                <span class="user-role" th:text="${user.role}"></span>
+            </div>
+        </div>
+        <p th:if="${#lists.isEmpty(users)}">사용자가 없습니다.</p>
+    </section>
+</main>
+
+<div id="userDetailModal" class="modal">
+    <div class="modal-content">
+        <span class="close-button">&times;</span>
+        <h2>사용자 상세 정보</h2>
+        <p><strong>이메일:</strong> <span id="modalUserEmail"></span></p>
+        <p><strong>닉네임:</strong> <span id="modalUserNickname"></span></p>
+        <p><strong>역할:</strong> <span id="modalUserRole"></span></p>
+
+        <div class="modal-buttons">
+            <select id="roleSelect" class="input">
+                <option value="USER">일반</option>
+                <option value="ADMIN">관리자</option>
+            </select>
+            <button class="btn primary" id="changeRoleButton">권한 변경</button>
+            <button class="btn" id="deleteUserButton">회원 탈퇴</button>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    document.addEventListener('DOMContentLoaded', function() {
+        var modal = document.getElementById('userDetailModal');
+        var closeButton = document.querySelector('.close-button');
+        var userCards = document.querySelectorAll('.user-card');
+        var roleSelect = document.getElementById('roleSelect');
+        var changeRoleButton = document.getElementById('changeRoleButton');
+        var deleteUserButton = document.getElementById('deleteUserButton');
+
+        userCards.forEach(function(card) {
+            card.addEventListener('click', function() {
+                var userId = this.getAttribute('data-user-id');
+                fetch('/admin/users/' + userId)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(user => {
+                        document.getElementById('modalUserEmail').textContent = user.email;
+                        document.getElementById('modalUserNickname').textContent = user.nickname;
+                        // Translate role
+                        var translatedRole = '';
+                        if (user.role === 'ADMIN') {
+                            translatedRole = '관리자';
+                        } else if (user.role === 'USER') {
+                            translatedRole = '일반';
+                        } else {
+                            translatedRole = user.role;
+                        }
+                        document.getElementById('modalUserRole').textContent = translatedRole;
+                        roleSelect.value = user.role;
+                        modal.setAttribute('data-current-user-id', user.id);
+                        modal.style.display = 'block';
+                    })
+                    .catch(error => {
+                        console.error('Error fetching user details:', error);
+                        alert('사용자 정보를 불러오는 데 실패했습니다.');
+                    });
+            });
+        });
+
+        closeButton.addEventListener('click', function() {
+            modal.style.display = 'none';
+        });
+
+        window.addEventListener('click', function(event) {
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        });
+
+        changeRoleButton.addEventListener('click', function() {
+            var userId = modal.getAttribute('data-current-user-id');
+            var userNickname = document.getElementById('modalUserNickname').textContent;
+            var newRole = roleSelect.value;
+            if (confirm('사용자 ' + userNickname + '의 역할을 ' + newRole + '(으)로 변경하시겠습니까?')) {
+                fetch('/admin/users/' + userId + '/role?role=' + newRole, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': /*[[${_csrf.token}]]*/ ''
+                    }
+                })
+                    .then(response => {
+                        if (response.ok) {
+                            alert('역할이 성공적으로 변경되었습니다.');
+                            modal.style.display = 'none';
+                            location.reload();
+                        } else {
+                            alert('역할 변경에 실패했습니다.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error changing role:', error);
+                        alert('역할 변경 중 오류가 발생했습니다.');
+                    });
+            }
+        });
+
+        deleteUserButton.addEventListener('click', function() {
+            var userId = modal.getAttribute('data-current-user-id');
+            var userNickname = document.getElementById('modalUserNickname').textContent;
+            if (confirm('사용자 ' + userNickname + '를 정말로 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+                fetch('/admin/users/' + userId, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': /*[[${_csrf.token}]]*/ ''
+                    }
+                })
+                    .then(response => {
+                        if (response.ok) {
+                            alert('사용자가 성공적으로 삭제되었습니다.');
+                            modal.style.display = 'none';
+                            location.reload();
+                        } else {
+                            alert('사용자 삭제에 실패했습니다.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error deleting user:', error);
+                        alert('사용자 삭제 중 오류가 발생했습니다.');
+                    });
+            }
+        });
+    });
+    /*]]>*/
+</script>
+</body>
+</html>
