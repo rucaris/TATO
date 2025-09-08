@@ -117,7 +117,7 @@
     <a th:href="@{/}" class="logo">TATO</a>
     <nav class="header-nav">
         <a th:href="@{/}" class="btn btn-secondary">홈</a>
-        <a th:href="@{/attractions}" class="btn btn-secondary">목록</a>
+
 
         <span sec:authorize="isAnonymous()">
             <a th:href="@{/login}" class="btn btn-primary">로그인</a>
@@ -138,10 +138,10 @@
     <!-- Sidebar -->
     <aside class="sidebar">
         <div class="listings-count" id="listingsCount">54</div>
-        <div class="listings-text">listings</div>
-        <button class="view-all-btn" onclick="showAll()">View them all →</button>
+        <div class="listings-text">개의 관광지가 검색되었습니다.</div>
+        <button class="view-all-btn" onclick="showAll()">전체 보기 →</button>
 
-        <h3 class="filter-title">Filters</h3>
+        <h3 class="filter-title">필터</h3>
 
         <!-- Search -->
         <input id="searchInput" class="search-box" placeholder="관광지 이름 검색..." onkeyup="applyFilters()">
@@ -269,6 +269,9 @@
 
     function updateListingsCount() {
         document.getElementById('listingsCount').textContent = filteredAttractions.length;
+        const countElement = document.getElementById('listingsCount');
+        const textElement = document.querySelector('.listings-text');
+
     }
 
     function renderAttractions() {

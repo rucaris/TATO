@@ -24,16 +24,18 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(Customizer.withDefaults())
-
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/",
+                                "/attractions",
+                                "/attractions/**",
+                                "/api/attractions/**",
                                 "/login", "/register", "/register/**",
-                                "/css/**", "/js/**", "/images/**", "/data/**", // ✅ CSV 파일 접근 추가
-                                "/webjars/**", "/favicon.ico",
-                                "/error" // 에러 페이지 접근 허용
+                                "/css/**", "/js/**", "images/**", "/webjars/**",
+                                "/data/**"
                         ).permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/favorites/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
