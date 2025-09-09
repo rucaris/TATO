@@ -160,9 +160,12 @@
                   id: r.spot_id || r.id,
                   name: (r.name||'').trim(),
                   category: (r.category||'기타').trim(),
+                  // 🎯 카테고리 배열도 함께 저장
+                  categories: (r.category||'기타').split(',').map(c => c.trim()),
                   ward: (r.ward||'').trim(),
                   address: (r.address||'').trim(),
-                  lat: parseFloat(r.latitude), lng: parseFloat(r.longitude),
+                  lat: parseFloat(r.latitude),
+                  lng: parseFloat(r.longitude),
                   description: (r.description||'').trim()
                 }))
                 .filter(a => !Number.isNaN(a.lat) && !Number.isNaN(a.lng));
@@ -182,10 +185,19 @@
 
   // 카테고리 필터
   function initCategoryPills(){
-    const cats = [...new Set(all.map(a=>a.category))].filter(Boolean).sort();
-    const box  = document.getElementById('catPills');
+    const allCats = new Set();
+    // 🎯 개별 카테고리들을 모두 수집
+    all.forEach(a => {
+      if (a.categories) {
+        a.categories.forEach(cat => allCats.add(cat));
+      }
+    });
+
+    const cats = Array.from(allCats).filter(Boolean).sort();
+    const box = document.getElementById('catPills');
     box.innerHTML = cats.map(c => `<button class="pill" data-cat="${c}" onclick="toggleCat('${c}', event)">${c}</button>`).join('');
   }
+
   function toggleCat(cat, ev){
     // active 토글
     const pills = document.querySelectorAll('.pill');
@@ -199,11 +211,12 @@
   function applyFilters(){
     const term = document.getElementById('q').value.trim().toLowerCase();
     filtered = all.filter(a=>{
-      const okCat = !activeCat || a.category === activeCat;
-      const okTerm = !term || [a.name, a.address, a.category, a.ward].some(v => (v||'').toLowerCase().includes(term));
+      const okCat = !activeCat || (a.categories && a.categories.includes(activeCat));
+      const okTerm = !term || [a.name, a.address, ...a.categories, a.ward].some(v => (v||'').toLowerCase().includes(term));
       return okCat && okTerm;
     });
-    renderMarkers(); renderList();
+    renderMarkers();
+    renderList();
 
     // 검색 시 첫 결과로 이동
     if(term && filtered.length){

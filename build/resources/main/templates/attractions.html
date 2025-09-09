@@ -226,15 +226,30 @@
     }
 
     function setupCategoryFilters() {
-        const categories = [...new Set(allAttractions.map(a => a.category))].sort();
+        // 🎯 모든 카테고리를 개별적으로 분할하여 수집
+        const allCategories = new Set();
+
+        allAttractions.forEach(attraction => {
+            if (attraction.category) {
+                // 쉼표로 분할하여 개별 카테고리 추가
+                const categories = attraction.category.split(',').map(c => c.trim());
+                categories.forEach(category => {
+                    if (category && category !== '') {
+                        allCategories.add(category);
+                    }
+                });
+            }
+        });
+
+        const categories = Array.from(allCategories).sort();
         const container = document.getElementById('categoryFilters');
 
         container.innerHTML = categories.map(category => `
-            <div class="filter-option">
-                <input type="checkbox" id="cat_${category}" value="${category}" onchange="toggleCategory('${category}')">
-                <label for="cat_${category}">${category}</label>
-            </div>
-        `).join('');
+        <div class="filter-option">
+            <input type="checkbox" id="cat_${category}" value="${category}" onchange="toggleCategory('${category}')">
+            <label for="cat_${category}">${category}</label>
+        </div>
+    `).join('');
     }
 
     function toggleCategory(category) {
@@ -252,11 +267,12 @@
         filteredAttractions = allAttractions.filter(attraction => {
             const matchesSearch = !searchTerm ||
                 attraction.name.toLowerCase().includes(searchTerm) ||
-                attraction.category.toLowerCase().includes(searchTerm) ||
+                (attraction.category && attraction.category.toLowerCase().includes(searchTerm)) ||
                 attraction.address.toLowerCase().includes(searchTerm);
 
             const matchesCategory = selectedCategories.size === 0 ||
-                selectedCategories.has(attraction.category);
+                (attraction.category &&
+                    attraction.category.split(',').map(c => c.trim()).some(cat => selectedCategories.has(cat)));
 
             return matchesSearch && matchesCategory;
         });
@@ -290,24 +306,37 @@
             const imageUrl = manualData.images[attraction.id];
             const stars = '★★★★★';
 
+            // 🎯 카테고리를 쉼표로 분할하여 개별 태그 생성
+            let categoryTags = '';
+            if (attraction.category) {
+                const categories = attraction.category.split(',').map(c => c.trim());
+                categoryTags = categories.map((category, index) =>
+                    `<span class="card-category${index === 0 ? ' primary' : ''}">${escapeHtml(category)}</span>`
+                ).join('');
+            } else {
+                categoryTags = '<span class="card-category">기타</span>';
+            }
+
             return `
-                <div class="attraction-card" onclick="goToDetail('${attraction.id}')">
-                    <div class="card-image">
-                        ${imageUrl ?
-                `<img src="${imageUrl}" alt="${attraction.name}">` :
+            <div class="attraction-card" onclick="goToDetail('${attraction.id}')">
+                <div class="card-image">
+                    ${imageUrl ?
+                `<img src="${imageUrl}" alt="${attraction.name}" loading="lazy">` :
                 `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:48px;">📍</div>`
             }
+                </div>
+                <div class="card-content">
+                    <h3 class="card-title">${escapeHtml(attraction.name)}</h3>
+                    <div class="card-rating">
+                        <span class="stars">${stars}</span>
+                        <span class="rating-text">${rating.toFixed(1)}</span>
                     </div>
-                    <div class="card-content">
-                        <h3 class="card-title">${escapeHtml(attraction.name)}</h3>
-                        <div class="card-rating">
-                            <span class="stars">${stars}</span>
-                            <span class="rating-text">${rating.toFixed(1)}</span>
-                        </div>
-                        <span class="card-category">${escapeHtml(attraction.category)}</span>
+                    <div class="categories-container">
+                        ${categoryTags}
                     </div>
                 </div>
-            `;
+            </div>
+        `;
         }).join('');
     }
 

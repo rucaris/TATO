@@ -85,7 +85,26 @@
           <div class="title" th:text="${fav.name}">관광지명</div>
           <div class="meta" th:text="${fav.address}">주소</div>
           <div class="row">
-            <span class="badge" th:text="${fav.category}">카테고리</span>
+            <div class="categories-container" style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px;">
+              <!-- Thymeleaf로 쉼표로 분할하여 반복 -->
+              <th:block th:each="category, iterStat : ${#strings.listSplit(fav.category, ',')}">
+        <span th:class="'category-tag' + (${iterStat.first} ? ' primary' : '')"
+              th:text="${#strings.trim(category)}"
+              style="background: #eff6ff; color: #2563eb; padding: 4px 10px; border-radius: 12px; font-size: 12px; border: 1px solid #e0f2fe; font-weight: 500;">
+            카테고리
+        </span>
+              </th:block>
+            </div>
+
+            <!-- 추가 CSS (인라인으로 테스트) -->
+            <style>
+              .category-tag.primary {
+                background: #2563eb !important;
+                color: #fff !important;
+                border-color: #2563eb !important;
+                font-weight: 600 !important;
+              }
+            </style>
             <form th:action="@{/favorites/{id}(id=${fav.attractionId})}" method="post"
                   th:object="${fav}" onsubmit="return confirm('찜을 해제할까요?')">
               <input type="hidden" name="_method" value="delete"/>

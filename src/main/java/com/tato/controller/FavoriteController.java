@@ -39,17 +39,23 @@ public class FavoriteController {
         try {
             var user = userService.findByEmail(principal.getName());
 
+            // 실제 즐겨찾기 데이터 조회
             var favorites = favoriteRepository.findAllByUserId(user.getId());
 
+            // 템플릿용 데이터 변환
             List<Map<String, Object>> favoriteList = favorites.stream()
                     .map(fav -> {
                         Map<String, Object> item = new HashMap<>();
-                        item.put("attractionId", fav.getAttraction().getSpotId()); // spotId 사용
+                        item.put("attractionId", fav.getAttraction().getId());
                         item.put("name", fav.getAttraction().getName());
                         item.put("address", fav.getAttraction().getAddress() != null ?
                                 fav.getAttraction().getAddress() : "주소 정보 없음");
                         item.put("category", fav.getAttraction().getCategory());
 
+                        // ✅ 카테고리 목록 추가 (개별 태그용)
+                        item.put("categoryList", fav.getAttraction().getCategoryList());
+
+                        // ImageService 사용
                         Long attractionId = fav.getAttraction().getId();
                         String imageUrl = imageService.getImageUrl(attractionId);
                         item.put("imageUrl", imageUrl);
@@ -64,6 +70,7 @@ public class FavoriteController {
 
         } catch (Exception e) {
             e.printStackTrace();
+            // 에러시 빈 데이터
             model.addAttribute("favorites", new ArrayList<>());
             model.addAttribute("favoritesCount", 0);
             model.addAttribute("error", "즐겨찾기를 불러오는데 실패했습니다.");

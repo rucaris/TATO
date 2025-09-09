@@ -36,6 +36,7 @@ public class SecurityConfig {
                         ).permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/favorites/**").authenticated()
+                        .requestMatchers("/attractions/*/reviews").authenticated()
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
