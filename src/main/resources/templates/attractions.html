@@ -61,27 +61,10 @@
         .attraction-card{background:#fff;border-radius:12px;overflow:hidden;box-shadow:var(--card-shadow);transition:.2s;cursor:pointer}
         .attraction-card:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,0.15)}
 
-        /* ✅ 이미지 크기 통일 - 핵심 수정 부분 */
-        .card-image{
-            height:200px;
-            width:100%;
-            position:relative;
-            overflow:hidden;
-            background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            color:#fff;
-            font-size:48px;
-        }
-
+        /*  이미지 크기 통일 - 핵심 수정 부분 */
+        .card-image{height:200px;width:100%;position:relative;overflow:hidden;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);display:flex;align-items:center;justify-content:center;color:#fff;font-size:48px;}
         /* 이미지가 있을 때 통일된 크기로 표시 */
-        .card-image img{
-            width:100%;
-            height:100%;
-            object-fit:cover; /* 비율 유지하면서 영역 채우기 */
-            display:block;
-        }
+        .card-image img{width:100%;height:100%;object-fit:cover;display:block;}
 
         .card-content{padding:16px}
         .card-title{font-size:16px;font-weight:600;margin-bottom:8px;line-height:1.3}
@@ -104,12 +87,7 @@
         @media (max-width:1200px){
             .attractions-grid{grid-template-columns:repeat(2,1fr)}
         }
-        @media (max-width:768px){
-            .container{flex-direction:column}
-            .sidebar{width:100%;padding:16px}
-            .attractions-grid{grid-template-columns:1fr}
-            .page-title{font-size:24px}
-        }
+        @media (max-width:768px){ .container{flex-direction:column}  .sidebar{width:100%;padding:16px}  .attractions-grid{grid-template-columns:1fr}  .page-title{font-size:24px}  }
     </style>
 </head>
 <body>
@@ -190,6 +168,7 @@
         },
     };
 
+
     // CSV 데이터 로드
     Papa.parse('/data/tokyo_attractions.csv', {
         download: true,
@@ -226,7 +205,7 @@
     }
 
     function setupCategoryFilters() {
-        // 🎯 모든 카테고리를 개별적으로 분할하여 수집
+        // 모든 카테고리를 개별적으로 분할하여 수집
         const allCategories = new Set();
 
         allAttractions.forEach(attraction => {
@@ -306,7 +285,7 @@
             const imageUrl = manualData.images[attraction.id];
             const stars = '★★★★★';
 
-            // 🎯 카테고리를 쉼표로 분할하여 개별 태그 생성
+            // 카테고리를 쉼표로 분할하여 개별 태그 생성
             let categoryTags = '';
             if (attraction.category) {
                 const categories = attraction.category.split(',').map(c => c.trim());

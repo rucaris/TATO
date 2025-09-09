@@ -6,7 +6,7 @@
   <meta charset="utf-8" />
   <title>TATO - 도쿄 관광지 한눈에</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="_csrf" th:content="${_csrf.token}"/> <!--토큰 오류 때문에 추가했습니다. -->
+  <meta name="_csrf" th:content="${_csrf.token}"/>
   <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
   <link th:href="@{/css/base.css}" rel="stylesheet">
 
@@ -64,6 +64,32 @@
     .name{font-weight:700;margin-bottom:4px}
     .meta{font-size:12px;color:var(--muted)}
     .badge{display:inline-block;margin-top:6px;background:#eff6ff;color:var(--primary);border-radius:999px;padding:2px 8px;font-size:11px}
+
+    /* 카테고리 태그 스타일 추가 */
+    .categories-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .category-tag {
+      background: #eff6ff;
+      color: #2563eb;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      border: 1px solid #e0f2fe;
+      font-weight: 500;
+      display: inline-block;
+    }
+
+    /* .category-tag.primary {
+      background: #2563eb;
+      color: #fff;
+      border-color: #2563eb;
+      font-weight: 600;
+    } */
 
     /* Map */
     .map-wrap{position:relative}
@@ -160,7 +186,6 @@
                   id: r.spot_id || r.id,
                   name: (r.name||'').trim(),
                   category: (r.category||'기타').trim(),
-                  // 🎯 카테고리 배열도 함께 저장
                   categories: (r.category||'기타').split(',').map(c => c.trim()),
                   ward: (r.ward||'').trim(),
                   address: (r.address||'').trim(),
@@ -186,7 +211,6 @@
   // 카테고리 필터
   function initCategoryPills(){
     const allCats = new Set();
-    // 🎯 개별 카테고리들을 모두 수집
     all.forEach(a => {
       if (a.categories) {
         a.categories.forEach(cat => allCats.add(cat));
@@ -199,7 +223,6 @@
   }
 
   function toggleCat(cat, ev){
-    // active 토글
     const pills = document.querySelectorAll('.pill');
     pills.forEach(p=>p.classList.remove('active'));
     if(activeCat === cat){ activeCat = null; }
@@ -207,7 +230,6 @@
     applyFilters();
   }
 
-  // 필터/검색 적용
   function applyFilters(){
     const term = document.getElementById('q').value.trim().toLowerCase();
     filtered = all.filter(a=>{
@@ -218,14 +240,12 @@
     renderMarkers();
     renderList();
 
-    // 검색 시 첫 결과로 이동
     if(term && filtered.length){
       const f = filtered[0];
       map.setView([f.lat, f.lng], 14);
     }
   }
 
-  // 마커/팝업
   function renderMarkers(){
     cluster.clearLayers();
     filtered.forEach(a=>{
@@ -246,17 +266,36 @@
     });
   }
 
-  // 목록
+  //  목록 렌더링 함수 수정
   function renderList(){
     const box = document.getElementById('listBox');
-    if(!filtered.length){ box.innerHTML = '<div class="meta">결과가 없습니다</div>'; return; }
-    box.innerHTML = filtered.map(a=>`
-      <article class="card" onclick="goto('${a.id}')">
-        <div class="name">${escapeHtml(a.name)}</div>
-        <div class="meta">${escapeHtml(a.address || a.ward || '')}</div>
-        <span class="badge">${escapeHtml(a.category)}</span>
-      </article>
-    `).join('');
+    if(!filtered.length){
+      box.innerHTML = '<div class="meta">결과가 없습니다</div>';
+      return;
+    }
+
+    box.innerHTML = filtered.map(a => {
+      // 카테고리를 쉼표로 분할하여 개별 태그 생성
+      let categoryTags = '';
+      if (a.category && a.category.trim()) {
+        const categories = a.category.split(',').map(c => c.trim());
+        categoryTags = categories.map((category, index) =>
+                `<span class="category-tag${index === 0 ? ' primary' : ''}">${escapeHtml(category)}</span>`
+        ).join(' ');
+      } else {
+        categoryTags = '<span class="category-tag">기타</span>';
+      }
+
+      return `
+        <article class="card" onclick="goto('${a.id}')">
+          <div class="name">${escapeHtml(a.name)}</div>
+          <div class="meta">${escapeHtml(a.address || a.ward || '')}</div>
+          <div class="categories-container">
+            ${categoryTags}
+          </div>
+        </article>
+      `;
+    }).join('');
   }
 
   function getCsrfToken() {
@@ -267,7 +306,7 @@
       header: csrfHeader ? csrfHeader.getAttribute('content') : null
     };
   }
-  // 액션
+
   async function fav(id) {
     console.log('즐겨찾기 요청:', id);
 
@@ -283,15 +322,10 @@
         console.warn('CSRF 토큰을 찾을 수 없습니다.');
       }
 
-      console.log('요청 헤더:', headers);
-      console.log('요청 URL:', `/favorites/${encodeURIComponent(id)}`);
-
       const response = await fetch(`/favorites/${encodeURIComponent(id)}`, {
         method: 'POST',
         headers: headers
       });
-
-      console.log('응답 상태:', response.status, response.statusText);
 
       if (!response.ok) {
         if (response.status === 401 || response.status === 403) {
@@ -303,12 +337,9 @@
       }
 
       const result = await response.json();
-      console.log('응답 결과:', result);
 
       if (result.success) {
         alert(result.message);
-
-        // 즐겨찾기 페이지에서는 페이지 새로고침
         if (window.location.pathname === '/favorites') {
           window.location.reload();
         }
@@ -322,13 +353,11 @@
     }
   }
 
-  // 관광지 상세 페이지로 이동
   function goto(id) {
     console.log('상세 페이지로 이동:', id);
     window.location.href = `/attractions/${encodeURIComponent(id)}`;
   }
 
-  // util
   function escapeHtml(s=''){
     return s.replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;' }[m]));
   }

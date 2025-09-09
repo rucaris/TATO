@@ -52,7 +52,7 @@ public class FavoriteController {
                                 fav.getAttraction().getAddress() : "주소 정보 없음");
                         item.put("category", fav.getAttraction().getCategory());
 
-                        // ✅ 카테고리 목록 추가 (개별 태그용)
+                        // 카테고리 목록 추가 - r개별태그
                         item.put("categoryList", fav.getAttraction().getCategoryList());
 
                         // ImageService 사용

@@ -185,13 +185,7 @@
       console.log("관광지 ID:", attractionId);
 
       // ID별 좌표 하드코딩 (임시)
-      const coordinates = {
-        '1': [35.678749, 139.7721285, '아티존 미술관'],
-        '2': [35.641543, 139.7133962, '도쿄도 사진미술관'],
-        '3': [35.6397288, 139.7177804, '국립 자연 교육원'],
-        '4': [35.6620432, 139.6935718, '간제 노가쿠 극장'],
-        '5': [35.7016508, 139.7913627, '구라마에 물의관']
-      };
+
 
       const coords = coordinates[attractionId];
       if (coords) {
@@ -214,6 +208,27 @@
     }
   });
 </script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const mapDiv = document.getElementById('map');
+    if (!mapDiv) return;
+
+    const lat = parseFloat(mapDiv.dataset.lat);
+    const lng = parseFloat(mapDiv.dataset.lng);
+    const name = mapDiv.dataset.name || '위치';
+
+    if (!Number.isNaN(lat) && !Number.isNaN(lng)) {
+      const map = L.map('map').setView([lat, lng], 15);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 19}).addTo(map);
+      L.marker([lat, lng]).addTo(map).bindPopup(name);
+    } else {
+      const map = L.map('map').setView([35.681236, 139.767125], 11);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 19}).addTo(map);
+    }
+  });
+</script>
+
 
 <!-- 별점 스크립트 -->
 <script>
