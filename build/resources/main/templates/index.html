@@ -19,8 +19,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
   <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
 
-  <!-- PapaParse for CSV -->
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  
 
   <style>
     :root{
@@ -136,7 +135,7 @@
   let map, cluster, all = [], filtered = [], activeCat = null;
 
   // 초기화
-  initMap(); loadCsv();
+  initMap(); loadAttractionsFromApi();
 
   function initMap(){
     map = L.map('map').setView([35.681236,139.767125], 11);
@@ -148,36 +147,35 @@
   }
   function resetView(){ map.setView([35.681236,139.767125], 11); }
 
-  function loadCsv(){
-    Papa.parse('/data/tokyo_attractions.csv', {
-      download: true,
-      header: true,
-      skipEmptyLines: true,
-      complete: (res)=>{
-        all = res.data
-                .filter(r => r.name && r.latitude && r.longitude)
-                .map(r => ({
-                  id: r.spot_id || r.id,
-                  name: (r.name||'').trim(),
-                  category: (r.category||'기타').trim(),
-                  ward: (r.ward||'').trim(),
-                  address: (r.address||'').trim(),
-                  lat: parseFloat(r.latitude), lng: parseFloat(r.longitude),
-                  description: (r.description||'').trim()
-                }))
-                .filter(a => !Number.isNaN(a.lat) && !Number.isNaN(a.lng));
+    function loadAttractionsFromApi(){
+    fetch('/api/attractions')
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        all = data.map(a => ({
+          id: a.id,
+          name: a.name || '',
+          category: a.category || '기타',
+          address: a.address || '',
+          lat: a.latitude,
+          lng: a.longitude,
+          description: a.description || ''
+        })).filter(a => !Number.isNaN(a.lat) && !Number.isNaN(a.lng));
 
         initCategoryPills();
         filtered = [...all];
         renderMarkers();
         renderList();
-      },
-      error: (e)=>{
+      })
+      .catch(error => {
         document.getElementById('listBox').innerHTML =
-                '<div style="color:#ef4444">CSV를 불러오지 못했습니다. 경로/서버를 확인하세요.</div>';
-        console.error(e);
-      }
-    });
+                '<div style="color:#ef4444">관광지 데이터를 불러오지 못했습니다. 서버를 확인하세요.</div>';
+        console.error('Error loading attractions:', error);
+      });
   }
 
   // 카테고리 필터

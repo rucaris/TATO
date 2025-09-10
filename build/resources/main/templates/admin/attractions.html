@@ -6,6 +6,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>관리자 - 관광지 관리</title>
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
     <link rel="stylesheet" href="/css/base.css">
     <style>
     :root{
@@ -246,6 +248,7 @@
         </aside>
         <section style="padding:20px 24px;">
             <h1>관광지 관리</h1>
+            <button type="button" class="btn primary" id="newAttractionBtn" style="margin-bottom: 20px;">새 관광지 추가</button>
             <div class="attraction-list-container">
                 <div class="attraction-card" th:each="attraction : ${attractions}" th:data-attraction-id="${attraction.id}">
                     <div class="attraction-name" th:text="${attraction.name}"></div>
@@ -256,7 +259,6 @@
             <p th:if="${#lists.isEmpty(attractions)}">관광지가 없습니다.</p>
         </section>
     </main>
-    <!-- Attraction Detail Modal -->
     <div id="attractionModal" class="modal">
         <div class="modal-content">
             <span class="close-button">&times;</span>
@@ -276,11 +278,19 @@
                     <input type="text" id="attractionAddress" name="address" class="input" required>
                 </p>
                 <p>
+                    <label for="attractionLatitude">위도:</label>
+                    <input type="number" step="any" id="attractionLatitude" name="latitude" class="input" required>
+                </p>
+                <p>
+                    <label for="attractionLongitude">경도:</label>
+                    <input type="number" step="any" id="attractionLongitude" name="longitude" class="input" required>
+                </p>
+                <p>
                     <label for="attractionDescription">설명:</label>
                     <textarea id="attractionDescription" name="description" class="input" rows="5"></textarea>
                 </p>
                 <div class="modal-buttons">
-                    <button type="button" class="btn primary" id="updateAttractionBtn">수정</button>
+                    <button type="button" class="btn primary" id="saveAttractionBtn">저장</button>
                     <button type="button" class="btn" id="deleteAttractionBtn">삭제</button>
                 </div>
             </form>
@@ -296,8 +306,16 @@
         const attractionCategoryInput = document.getElementById('attractionCategory');
         const attractionAddressInput = document.getElementById('attractionAddress');
         const attractionDescriptionInput = document.getElementById('attractionDescription');
-        const updateAttractionBtn = document.getElementById('updateAttractionBtn');
+        const attractionLatitudeInput = document.getElementById('attractionLatitude');
+        const attractionLongitudeInput = document.getElementById('attractionLongitude');
+        const saveAttractionBtn = document.getElementById('saveAttractionBtn');
         const deleteAttractionBtn = document.getElementById('deleteAttractionBtn');
+        const newAttractionBtn = document.getElementById('newAttractionBtn');
+
+        // 새 관광지 버튼 클릭 이벤트
+        newAttractionBtn.addEventListener('click', function() {
+            openModal(true); // 새 관광지 추가 모드
+        });
 
         // 모달 열기
         document.querySelectorAll('.attraction-card').forEach(card => {
@@ -315,13 +333,25 @@
             }
         });
 
-        function openModal() {
+        function openModal(isNew = false) {
             attractionModal.style.display = 'block';
+            if (isNew) {
+                attractionForm.reset();
+                attractionIdInput.value = ''; // 새 항목을 위해 ID 비움
+                saveAttractionBtn.textContent = '등록'; // 버튼 텍스트 변경
+                deleteAttractionBtn.style.display = 'none'; // 삭제 버튼 숨김
+            } else {
+                saveAttractionBtn.textContent = '수정'; // 기존 항목 수정
+                deleteAttractionBtn.style.display = 'inline-block'; // 삭제 버튼 표시
+            }
         }
 
         function closeModal() {
             attractionModal.style.display = 'none';
-            attractionForm.reset(); // Clear form fields
+            attractionForm.reset(); // 폼 필드 초기화
+            // 버튼 상태 초기화
+            saveAttractionBtn.textContent = '수정';
+            deleteAttractionBtn.style.display = 'inline-block';
         }
 
         async function fetchAttractionDetails(id) {
@@ -332,7 +362,7 @@
                 }
                 const attraction = await response.json();
                 populateModal(attraction);
-                openModal();
+                openModal(false);
             } catch (error) {
                 console.error('Error fetching attraction details:', error);
                 alert('관광지 정보를 불러오는 데 실패했습니다.');
@@ -345,37 +375,52 @@
             attractionCategoryInput.value = attraction.category;
             attractionAddressInput.value = attraction.address;
             attractionDescriptionInput.value = attraction.description || '';
+            attractionLatitudeInput.value = attraction.latitude || '';
+            attractionLongitudeInput.value = attraction.longitude || '';
         }
 
-        // 수정
-        updateAttractionBtn.addEventListener('click', async function() {
+        // 저장
+        saveAttractionBtn.addEventListener('click', async function() {
             const id = attractionIdInput.value;
-            const updatedAttraction = {
-                id: id,
+            const isNew = id === '';
+            const method = isNew ? 'POST' : 'PUT';
+            const url = isNew ? '/api/admin/attractions' : `/api/admin/attractions/${id}`;
+
+            const attractionData = {
                 name: attractionNameInput.value,
                 category: attractionCategoryInput.value,
                 address: attractionAddressInput.value,
-                description: attractionDescriptionInput.value
+                description: attractionDescriptionInput.value,
+                latitude: parseFloat(attractionLatitudeInput.value),
+                longitude: parseFloat(attractionLongitudeInput.value)
             };
 
+            const csrf = getCsrfToken();
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            if (csrf.token && csrf.header) {
+                headers[csrf.header] = csrf.token;
+            }
+
             try {
-                const response = await fetch(`/api/admin/attractions/${id}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(updatedAttraction)
+                const response = await fetch(url, {
+                    method: method,
+                    headers: headers,
+                    body: JSON.stringify(attractionData)
                 });
 
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    const errorText = await response.text();
+                    throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
                 }
 
-                alert('관광지 정보가 성공적으로 수정되었습니다.');
+                alert(isNew ? '관광지가 성공적으로 등록되었습니다.' : '관광지 정보가 성공적으로 수정되었습니다.');
                 closeModal();
+                location.reload();
             } catch (error) {
-                console.error('Error updating attraction:', error);
-                alert('관광지 정보 수정에 실패했습니다.');
+                console.error('Error saving attraction:', error);
+                alert(isNew ? '관광지 등록에 실패했습니다: ' + error.message : '관광지 정보 수정에 실패했습니다: ' + error.message);
             }
         });
 
@@ -383,9 +428,16 @@
         deleteAttractionBtn.addEventListener('click', async function() {
             const id = attractionIdInput.value;
             if (confirm('정말로 이 관광지를 삭제하시겠습니까?')) {
+                const csrf = getCsrfToken();
+                const headers = {};
+                if (csrf.token && csrf.header) {
+                    headers[csrf.header] = csrf.token;
+                }
+
                 try {
                     const response = await fetch(`/api/admin/attractions/${id}`, {
-                        method: 'DELETE'
+                        method: 'DELETE',
+                        headers: headers
                     });
 
                     if (!response.ok) {
@@ -394,12 +446,22 @@
 
                     alert('관광지가 성공적으로 삭제되었습니다.');
                     closeModal();
+                    location.reload();
                 } catch (error) {
                     console.error('Error deleting attraction:', error);
                     alert('관광지 삭제에 실패했습니다.');
                 }
             }
         });
+
+        function getCsrfToken() {
+            const csrfToken = document.querySelector('meta[name="_csrf"]');
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]');
+            return {
+                token: csrfToken ? csrfToken.getAttribute('content') : null,
+                header: csrfHeader ? csrfHeader.getAttribute('content') : null
+            };
+        }
 
     </script>
 </body>

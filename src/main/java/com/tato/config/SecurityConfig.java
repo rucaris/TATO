@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -33,7 +34,12 @@ public class SecurityConfig {
                                 "/register", "/register/**",   // 등록 페이지/POST 모두 공개
                                 "/css/**", "/js/**", "/images/**", "/webjars/**"
                         ).permitAll()
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        // Allow GET for admin pages, and POST/PUT/DELETE for admin APIs
+                        .requestMatchers(HttpMethod.GET, "/admin/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/admin/attractions").hasRole("ADMIN") // Explicitly allow POST for creating attractions
+                        .requestMatchers(HttpMethod.PUT, "/api/admin/attractions/**").hasRole("ADMIN") // Ensure PUT is allowed for updating
+                        .requestMatchers(HttpMethod.DELETE, "/api/admin/attractions/**").hasRole("ADMIN") // Ensure DELETE is allowed for deleting
+                        .requestMatchers(HttpMethod.POST, "/api/proposals/attractions").authenticated() // Allow authenticated users to submit proposals
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form

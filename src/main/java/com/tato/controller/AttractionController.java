@@ -8,6 +8,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import java.util.List;
+import org.springframework.http.ResponseEntity;
 
 import java.security.Principal;
 
@@ -60,5 +62,12 @@ public class AttractionController {
     }
 
     return "redirect:/attractions/" + id;
+  }
+
+  @GetMapping("/api/attractions")
+  @ResponseBody
+  public ResponseEntity<List<com.tato.model.Attraction>> getAllAttractions() {
+      List<com.tato.model.Attraction> attractions = attractionService.findAllAttractions();
+      return ResponseEntity.ok(attractions);
   }
 }

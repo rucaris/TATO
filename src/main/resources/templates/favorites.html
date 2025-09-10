@@ -3,6 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <title>즐겨찾기 - TATO</title>
+  <meta name="_csrf" th:content="${_csrf.token}"/>
+  <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link th:href="@{/css/base.css}" rel="stylesheet">
 
@@ -55,7 +57,10 @@
 
 <main class="main">
   <nav class="breadcrumb"><a th:href="@{/}">홈</a> &gt; <strong>즐겨찾기</strong></nav>
-  <h1 class="page-title">내 즐겨찾기</h1>
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <h1 class="page-title" style="margin-bottom: 0;">내 즐겨찾기</h1>
+    <button type="button" class="btn btn-primary" id="submitAttractionProposalBtn">관광지 등록 신청</button>
+  </div>
 
   <section class="stats">
     <div><h3>총 즐겨찾기</h3><strong th:text="${favoritesCount}">0</strong></div>
@@ -97,5 +102,136 @@
     </div>
   </section>
 </main>
+
+<!-- Attraction Proposal Modal -->
+<div id="attractionProposalModal" class="modal">
+    <div class="modal-content">
+        <span class="close-button">&times;</span>
+        <h2>관광지 등록 신청</h2>
+        <form id="attractionProposalForm">
+            <p>
+                <label for="proposalName">이름:</label>
+                <input type="text" id="proposalName" name="name" class="input" required>
+            </p>
+            <p>
+                <label for="proposalCategory">카테고리:</label>
+                <input type="text" id="proposalCategory" name="category" class="input" required>
+            </p>
+            <p>
+                <label for="proposalAddress">주소:</label>
+                <input type="text" id="proposalAddress" name="address" class="input" required>
+            </p>
+            <p>
+                <label for="proposalLatitude">위도:</label>
+                <input type="number" step="any" id="proposalLatitude" name="latitude" class="input" required>
+            </p>
+            <p>
+                <label for="proposalLongitude">경도:</label>
+                <input type="number" step="any" id="proposalLongitude" name="longitude" class="input" required>
+            </p>
+            <p>
+                <label for="proposalDescription">설명:</label>
+                <textarea id="proposalDescription" name="description" class="input" rows="5"></textarea>
+            </p>
+            <div class="modal-buttons">
+                <button type="submit" class="btn primary" id="submitProposalBtn">신청</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<script>
+    // CSRF 토큰 가져오기 함수
+    function getCsrfToken() {
+        const csrfToken = document.querySelector('meta[name="_csrf"]');
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]');
+        return {
+            token: csrfToken ? csrfToken.getAttribute('content') : null,
+            header: csrfHeader ? csrfHeader.getAttribute('content') : null
+        };
+    }
+
+    // 모달 요소
+    const attractionProposalModal = document.getElementById('attractionProposalModal');
+    const closeProposalModalButton = attractionProposalModal.querySelector('.close-button');
+    const submitAttractionProposalBtn = document.getElementById('submitAttractionProposalBtn');
+    const attractionProposalForm = document.getElementById('attractionProposalForm');
+    const submitProposalBtn = document.getElementById('submitProposalBtn');
+
+    // 입력 필드
+    const proposalNameInput = document.getElementById('proposalName');
+    const proposalCategoryInput = document.getElementById('proposalCategory');
+    const proposalAddressInput = document.getElementById('proposalAddress');
+    const proposalLatitudeInput = document.getElementById('proposalLatitude');
+    const proposalLongitudeInput = document.getElementById('proposalLongitude');
+    const proposalDescriptionInput = document.getElementById('proposalDescription');
+
+    // '관광지 등록 신청' 버튼 클릭 이벤트
+    submitAttractionProposalBtn.addEventListener('click', function() {
+        openProposalModal();
+    });
+
+    // 모달 닫기 버튼 클릭 이벤트
+    closeProposalModalButton.addEventListener('click', closeProposalModal);
+
+    // 모달 외부 클릭 시 닫기
+    window.addEventListener('click', function(event) {
+        if (event.target == attractionProposalModal) {
+            closeProposalModal();
+        }
+    });
+
+    function openProposalModal() {
+        attractionProposalModal.style.display = 'block';
+        attractionProposalForm.reset(); // 폼 초기화
+    }
+
+    function closeProposalModal() {
+        attractionProposalModal.style.display = 'none';
+        attractionProposalForm.reset(); // 폼 초기화
+    }
+
+    // 제안 제출 버튼 클릭 이벤트
+    submitProposalBtn.addEventListener('click', async function(event) {
+        event.preventDefault(); // 폼 기본 제출 방지
+
+        const proposalData = {
+            name: proposalNameInput.value,
+            category: proposalCategoryInput.value,
+            address: proposalAddressInput.value,
+            latitude: parseFloat(proposalLatitudeInput.value),
+            longitude: parseFloat(proposalLongitudeInput.value),
+            description: proposalDescriptionInput.value
+        };
+
+        const csrf = getCsrfToken();
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        if (csrf.token && csrf.header) {
+            headers[csrf.header] = csrf.token;
+        }
+
+        try {
+            const response = await fetch('/api/proposals/attractions', {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify(proposalData)
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+            }
+
+            alert('관광지 등록 신청이 성공적으로 제출되었습니다. 관리자 승인 후 반영됩니다.');
+            closeProposalModal();
+        } catch (error) {
+            console.error('Error submitting proposal:', error);
+            alert('관광지 등록 신청에 실패했습니다: ' + error.message);
+        }
+    });
+</script>
 </body>
 </html>
