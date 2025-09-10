@@ -1,4 +1,4 @@
-SET FOREIGN_KEY_CHECKS = 0;
+/* SET FOREIGN_KEY_CHECKS = 0;
 
 -- 기존 데이터 삭제
 DELETE FROM review;
@@ -8,7 +8,7 @@ DELETE FROM attraction;
 -- AUTO_INCREMENT 초기화
 ALTER TABLE attraction AUTO_INCREMENT = 1;
 
-SET FOREIGN_KEY_CHECKS = 1;
+SET FOREIGN_KEY_CHECKS = 1; */
 
 -- 관광지 데이터 삽입 (id = spot_id로 맞춤)
 INSERT INTO attraction (id, spot_id, name, category, address, latitude, longitude, description) VALUES
@@ -65,7 +65,12 @@ INSERT INTO attraction (id, spot_id, name, category, address, latitude, longitud
 (51, '51', '도쿄 성 티모테 교회', '교회·종교시설,건축물,관광명소', NULL,  35.7191464, 139.7590348, '오랜 세월 지역을 지켜온 사찰'),
 (52, '52', '사이쿄지', '신사·사찰,역사유적,관광명소', NULL,  35.7172124, 139.7590029, '감각적인 전시와 창작을 만날 수 있는 아트 갤러리'),
 (53, '53', '갤러리 TEN', '미술관·박물관,문화시설,관광명소', NULL,  35.7210239, 139.7647079, '소박하면서도 따뜻한 분위기의 동네 신사'),
-(54, '54', '마지마 이나리 신사', '신사·사찰,역사유적,관광명소', NULL,  35.7210493, 139.7659237, '지역 신앙을 지켜온 작고 아담한 신사');
+(54, '54', '마지마 이나리 신사', '신사·사찰,역사유적,관광명소', NULL,  35.7210493, 139.7659237, '지역 신앙을 지켜온 작고 아담한 신사')
 
--- AUTO_INCREMENT 값을 다음 사용할 값으로 설정
-ALTER TABLE attraction AUTO_INCREMENT = 55;
+ON DUPLICATE KEY UPDATE
+                     name        = VALUES(name),
+                     category    = VALUES(category),
+                     address     = VALUES(address),
+                     latitude    = VALUES(latitude),
+                     longitude   = VALUES(longitude),
+                     description = VALUES(description);
