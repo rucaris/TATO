@@ -5,19 +5,26 @@ logging:
     org.hibernate: INFO
     org.springframework.orm.jpa: INFO
 
+
 spring:
   thymeleaf:
     cache: false
+
   datasource:
-    url: jdbc:mysql://localhost:3306/tokyo_spots?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=utf8
+    url: jdbc:mysql://localhost:3306/tokyo_spots?useSSL=false&serverTimezone=Asia/Seoul&useUnicode=true&characterEncoding=utf8
     username: mari
     password: 1234
     driver-class-name: com.mysql.cj.jdbc.Driver
 
+  sql:
+    init:
+      mode: always
+
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: false  #로그 중복 방지 때문에
+    defer-datasource-initialization: true  #
+    show-sql: false
     properties:
       hibernate:
         format_sql: true
@@ -29,6 +36,6 @@ spring:
 
 app:
   data:
-    auto-load: true
+    auto-load: false
   admin:
     auto-create: true

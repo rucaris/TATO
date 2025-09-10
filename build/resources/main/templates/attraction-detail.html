@@ -105,7 +105,7 @@
         <!-- 리뷰 작성 (로그인 사용자만) -->
         <div sec:authorize="isAuthenticated()" class="review-form">
           <h4>리뷰 작성하기</h4>
-          <form th:action="@{/attractions/{id}/reviews(id=${attraction.id})}" method="post">
+          <form th:action="@{/attractions/{id}/reviews(id=${attraction.spotId})}" method="post">
             <div class="form-group">
               <label>평점:</label>
               <div class="rating-input">
@@ -175,60 +175,19 @@
 <!-- 지도 스크립트 -->
 <script>
   document.addEventListener('DOMContentLoaded', function() {
-    const mapDiv = document.getElementById('map');
+    const el = document.getElementById('map');
+    if (!el) return;
 
-    if (mapDiv) {
-      // 강제로 현재 페이지 URL에서 ID 추출
-      const urlParts = window.location.pathname.split('/');
-      const attractionId = urlParts[urlParts.length - 1];
+    const lat = parseFloat(el.dataset.lat);
+    const lng = parseFloat(el.dataset.lng);
+    const name = el.dataset.name || '위치';
 
-      console.log("관광지 ID:", attractionId);
-
-      // ID별 좌표 하드코딩 (임시)
-
-
-      const coords = coordinates[attractionId];
-      if (coords) {
-        const [lat, lng, name] = coords;
-        console.log("사용할 좌표:", name, "위도:", lat, "경도:", lng);
-
-        const map = L.map('map').setView([lat, lng], 15);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          maxZoom: 19
-        }).addTo(map);
-        L.marker([lat, lng]).addTo(map);
-        console.log("지도 생성 완료");
-      } else {
-        console.log("해당 ID의 좌표 없음, 기본 위치 사용");
-        const map = L.map('map').setView([35.681236, 139.767125], 11);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          maxZoom: 19
-        }).addTo(map);
-      }
-    }
+    const hasCoords = !isNaN(lat) && !isNaN(lng);
+    const map = L.map('map').setView(hasCoords ? [lat, lng] : [35.681236, 139.767125], hasCoords ? 15 : 11);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+    if (hasCoords) L.marker([lat, lng]).addTo(map).bindPopup(name);
   });
 </script>
-
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    const mapDiv = document.getElementById('map');
-    if (!mapDiv) return;
-
-    const lat = parseFloat(mapDiv.dataset.lat);
-    const lng = parseFloat(mapDiv.dataset.lng);
-    const name = mapDiv.dataset.name || '위치';
-
-    if (!Number.isNaN(lat) && !Number.isNaN(lng)) {
-      const map = L.map('map').setView([lat, lng], 15);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 19}).addTo(map);
-      L.marker([lat, lng]).addTo(map).bindPopup(name);
-    } else {
-      const map = L.map('map').setView([35.681236, 139.767125], 11);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 19}).addTo(map);
-    }
-  });
-</script>
-
 
 <!-- 별점 스크립트 -->
 <script>
