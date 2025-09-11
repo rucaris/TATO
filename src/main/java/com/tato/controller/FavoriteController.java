@@ -137,7 +137,6 @@ public class FavoriteController {
             }
 
             // 실제 관광지 신청 로직
-            // TODO: 나중에 AttractionSubmission 엔티티를 만들어서 관리자 승인 대기 상태로 저장
             // 지금은 임시로 로그만 출력
             log.info("관광지 신청 접수 완료:");
             log.info("  - 신청자: {}", user.getNickname());
