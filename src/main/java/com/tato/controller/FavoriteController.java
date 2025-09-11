@@ -3,6 +3,7 @@ package com.tato.controller;
 import com.tato.repository.FavoriteRepository;
 import com.tato.service.FavoriteService;
 import com.tato.service.UserService;
+import com.tato.service.ImageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
@@ -12,7 +13,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.security.Principal;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Controller
@@ -22,6 +25,7 @@ public class FavoriteController {
     private final FavoriteService favoriteService;
     private final UserService userService;
     private final FavoriteRepository favoriteRepository;
+    private final ImageService imageService; // 추가
 
     @GetMapping("/favorites")
     public String favoritesPage(Model model, Principal principal) {
@@ -33,12 +37,35 @@ public class FavoriteController {
             var user = userService.findByEmail(principal.getName());
             model.addAttribute("username", user.getNickname());
             model.addAttribute("userEmail", user.getEmail());
+
+            // ✅ 즐겨찾기 데이터를 템플릿에 맞게 변환
             var favorites = favoriteRepository.findAllByUserId(user.getId());
-            model.addAttribute("favorites", favorites);
+
+            List<Map<String, Object>> favoriteList = favorites.stream()
+                    .map(fav -> {
+                        Map<String, Object> item = new HashMap<>();
+                        item.put("attractionId", fav.getAttraction().getId());
+                        item.put("name", fav.getAttraction().getName());
+                        item.put("address", fav.getAttraction().getAddress() != null ?
+                                fav.getAttraction().getAddress() : "주소 정보 없음");
+                        item.put("category", fav.getAttraction().getCategory());
+
+                        // ImageService 사용해서 이미지 URL 추가
+                        String imageUrl = imageService.getImageUrl(fav.getAttraction().getId());
+                        item.put("imageUrl", imageUrl);
+
+                        return item;
+                    })
+                    .collect(Collectors.toList());
+
+            model.addAttribute("favorites", favoriteList);
+            model.addAttribute("favoritesCount", favorites.size());
 
         } catch (Exception e) {
             log.error("즐겨찾기 페이지 로딩 중 오류", e);
             model.addAttribute("error", "즐겨찾기를 불러오는 중 오류가 발생했습니다.");
+            model.addAttribute("favorites", List.of()); // 빈 리스트로 설정
+            model.addAttribute("favoritesCount", 0);
         }
 
         return "favorites";
@@ -151,10 +178,13 @@ public class FavoriteController {
             response.put("favorited", isFavorited);
             response.put("message", isFavorited ?
                     "즐겨찾기에 추가되었습니다!" : "즐겨찾기에서 제거되었습니다.");
+
+            log.debug("즐겨찾기 토글 완료: attractionId={}, isFavorited={}", attractionId, isFavorited);
+
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", "오류가 발생했습니다: " + e.getMessage());
-            log.error("즐겨찾기 토글 중 오류", e);
+            log.error("즐겨찾기 토글 중 오류: attractionId={}", attractionId, e);
         }
 
         return response;

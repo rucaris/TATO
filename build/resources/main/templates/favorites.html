@@ -330,16 +330,6 @@
             <label for="address">주소</label>
             <input id="address" name="address" type="text" placeholder="예: 도쿄도 다이토구 아사쿠사 2-3-1"/>
           </div>
-
-          <div class="form-group">
-            <label for="latitude">위도</label>
-            <input id="latitude" name="latitude" type="text" placeholder="예: 35.714765" pattern="[0-9.-]+"/>
-          </div>
-
-          <div class="form-group">
-            <label for="longitude">경도</label>
-            <input id="longitude" name="longitude" type="text" placeholder="예: 139.796727" pattern="[0-9.-]+"/>
-          </div>
         </div>
 
         <div class="form-group">
@@ -375,6 +365,178 @@
     // 선택된 탭 활성화
     event.target.classList.add('active');
     document.getElementById(tabName + '-tab').classList.add('active');
+  }
+
+  // CSRF 토큰 가져오기
+  function getCsrfToken() {
+    const csrfToken = document.querySelector('meta[name="_csrf"]');
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]');
+    return {
+      token: csrfToken ? csrfToken.getAttribute('content') : null,
+      header: csrfHeader ? csrfHeader.getAttribute('content') : null
+    };
+  }
+
+  // 즐겨찾기 해제 함수
+  async function removeFavorite(button, event) {
+    // 이벤트 버블링 방지 (카드 클릭 이벤트와 충돌 방지)
+    event.preventDefault();
+    event.stopPropagation();
+
+    const attractionId = button.getAttribute('data-attraction-id');
+
+    if (!confirm('정말로 즐겨찾기를 해제하시겠습니까?')) {
+      return;
+    }
+
+    try {
+      const csrf = getCsrfToken();
+      const headers = {
+        'Content-Type': 'application/json',
+      };
+
+      if (csrf.token && csrf.header) {
+        headers[csrf.header] = csrf.token;
+      }
+
+      // 버튼 비활성화
+      button.disabled = true;
+      button.textContent = '처리중...';
+
+      const response = await fetch(`/favorites/${encodeURIComponent(attractionId)}`, {
+        method: 'POST',
+        headers: headers
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (result.success) {
+        // 성공시 카드 애니메이션과 함께 제거
+        const card = button.closest('.card');
+        card.style.transform = 'translateY(-10px)';
+        card.style.opacity = '0';
+
+        setTimeout(() => {
+          card.remove();
+
+          // 즐겨찾기 개수 업데이트
+          updateFavoriteCount();
+
+          // 모든 카드가 제거되었는지 확인
+          checkEmptyState();
+        }, 300);
+
+        // 성공 메시지
+        showToast('즐겨찾기가 해제되었습니다.');
+      } else {
+        throw new Error(result.message || '즐겨찾기 해제에 실패했습니다.');
+      }
+
+    } catch (error) {
+      console.error('즐겨찾기 해제 중 오류:', error);
+      alert('즐겨찾기 해제 중 오류가 발생했습니다: ' + error.message);
+
+      // 에러시 버튼 복구
+      button.disabled = false;
+      button.textContent = '해제';
+    }
+  }
+
+  // 즐겨찾기 개수 업데이트
+  function updateFavoriteCount() {
+    const remainingCards = document.querySelectorAll('.grid .card').length;
+    const countElement = document.querySelector('.stats strong');
+    if (countElement) {
+      countElement.textContent = remainingCards;
+    }
+  }
+
+  // 빈 상태 확인
+  function checkEmptyState() {
+    const grid = document.querySelector('.grid');
+    const remainingCards = document.querySelectorAll('.grid .card').length;
+
+    if (remainingCards === 0) {
+      grid.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-secondary);">즐겨찾기한 관광지가 없습니다.<br><a href="/attractions" style="color:var(--primary-color);">관광지 둘러보기</a></div>';
+    }
+  }
+
+  // 토스트 메시지 표시 (선택사항)
+  function showToast(message) {
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #10b981;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      z-index: 9999;
+      font-size: 14px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
+    `;
+    toast.textContent = message;
+
+    document.body.appendChild(toast);
+
+    // 애니메이션으로 나타내기
+    setTimeout(() => {
+      toast.style.transform = 'translateX(0)';
+    }, 100);
+
+    // 3초 후 제거
+    setTimeout(() => {
+      toast.style.transform = 'translateX(100%)';
+      setTimeout(() => {
+        if (toast.parentNode) {
+          toast.parentNode.removeChild(toast);
+        }
+      }, 300);
+    }, 3000);
+  }
+
+  // 폼 검증
+  document.addEventListener('DOMContentLoaded', function() {
+    const hash = window.location.hash;
+    if (hash === '#submit') {
+      switchTab('submit');
+    } else {
+      switchTab('favorites');
+    }
+  });
+
+  // 탭 전환 함수 수정
+  function switchTab(tabName) {
+    // 모든 탭 버튼에서 active 클래스 제거
+    document.querySelectorAll('.tab-button').forEach(btn => {
+      btn.classList.remove('active');
+    });
+
+    // 모든 탭 콘텐츠 숨기기
+    document.querySelectorAll('.tab-content').forEach(content => {
+      content.classList.remove('active');
+    });
+
+    // 선택된 탭 활성화
+    const targetButton = document.querySelector(`[onclick="switchTab('${tabName}')"]`);
+    if (targetButton) {
+      targetButton.classList.add('active');
+    }
+
+    const targetContent = document.getElementById(tabName + '-tab');
+    if (targetContent) {
+      targetContent.classList.add('active');
+    }
+
+    // URL 해시 업데이트
+    window.location.hash = tabName;
   }
 
   // CSRF 토큰 가져오기
@@ -487,73 +649,24 @@
       padding: 12px 20px;
       border-radius: 8px;
       z-index: 9999;
-      font-size: 14px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-      transform: translateX(100%);
-      transition: transform 0.3s ease;
+      animation: slideIn 0.3s ease-out;
     `;
     toast.textContent = message;
-
     document.body.appendChild(toast);
 
-    // 애니메이션으로 나타내기
     setTimeout(() => {
-      toast.style.transform = 'translateX(0)';
-    }, 100);
-
-    // 3초 후 제거
-    setTimeout(() => {
-      toast.style.transform = 'translateX(100%)';
-      setTimeout(() => {
-        if (toast.parentNode) {
-          toast.parentNode.removeChild(toast);
-        }
-      }, 300);
+      toast.remove();
     }, 3000);
   }
 
-  // 폼 검증
+  // 관광지 신청 폼 제출 시 확인
   document.addEventListener('DOMContentLoaded', function() {
-    const form = document.querySelector('.submit-form');
-    if (form) {
-      // 좌표 입력 검증
-      document.getElementById('latitude').addEventListener('input', function(e) {
-        const value = e.target.value;
-        if (value && (isNaN(value) || value < -90 || value > 90)) {
-          e.target.setCustomValidity('올바른 위도를 입력해주세요 (-90 ~ 90)');
-        } else {
-          e.target.setCustomValidity('');
-        }
-      });
-
-      document.getElementById('longitude').addEventListener('input', function(e) {
-        const value = e.target.value;
-        if (value && (isNaN(value) || value < -180 || value > 180)) {
-          e.target.setCustomValidity('올바른 경도를 입력해주세요 (-180 ~ 180)');
-        } else {
-          e.target.setCustomValidity('');
-        }
-      });
-
-      // 폼 제출 전 검증
-      form.addEventListener('submit', function(e) {
-        const name = document.getElementById('name').value.trim();
-        const category = document.getElementById('category').value;
-        const description = document.getElementById('description').value.trim();
-
-        if (!name || !category || !description) {
+    const submitForm = document.querySelector('.submit-form');
+    if (submitForm) {
+      submitForm.addEventListener('submit', function(e) {
+        if (!confirm('관광지 신청을 제출하시겠습니까?')) {
           e.preventDefault();
-          alert('필수 항목을 모두 입력해주세요.');
-          return false;
         }
-
-        if (description.length < 10) {
-          e.preventDefault();
-          alert('설명은 10자 이상 입력해주세요.');
-          return false;
-        }
-
-        return true;
       });
     }
   });

@@ -300,7 +300,7 @@
         ${a.description?`<div class="meta" style="margin-top:6px">${escapeHtml(a.description)}</div>`:''}
         <div style="margin-top:10px;display:flex;gap:8px">
           <a class="btn primary" href="/attractions/${encodeURIComponent(a.id)}">상세보기</a>
-          <button class="btn" onclick="fav('${a.id}')">❤ 찜하기</button>
+          <button class="btn" onclick="fav('${a.id}')">즐겨찾기</button>
         </div>
       </div>`;
       m.bindPopup(html);
@@ -352,6 +352,17 @@
   async function fav(id){
     console.log('즐겨찾기 요청:', id);
 
+    //  로그인 체크 개선 - Thymeleaf 렌더링된 요소 확인
+    const isLoggedIn = document.querySelector('span[sec\\:authorize="isAuthenticated()"]') ||
+            document.querySelector('span.user') ||
+            document.querySelector('input[name="_csrf"]'); // CSRF 토큰 존재 확인
+
+    if (!isLoggedIn) {
+      alert('로그인이 필요합니다.');
+      window.location.href = '/login';
+      return;
+    }
+
     try {
       const csrf = getCsrfToken();
       const headers = {
@@ -377,15 +388,52 @@
       }
 
       const result = await response.json();
+      console.log('즐겨찾기 응답:', result); // 디버깅용
+
       if (result.success) {
-        alert(result.message);
+        // 성공 메시지와 함께 상태 표시
+        const message = result.favorited ?
+                '즐겨찾기 완료' :
+                '즐겨찾기 제거';
+
+        alert(message);
+
+        // 선택적: 버튼 텍스트나 스타일 업데이트
+        updateFavoriteButtons(id, result.favorited);
+
       } else {
         alert(result.message || '오류가 발생했습니다.');
       }
     } catch (error) {
       console.error('즐겨찾기 처리 중 오류:', error);
-      alert('네트워크 오류가 발생했습니다.');
+      alert('네트워크 오류가 발생했습니다: ' + error.message);
     }
+  }
+
+  function updateFavoriteButtons(attractionId, isFavorited) {
+    // 지도 팝업의 즐겨찾기 버튼 찾기
+    const popupButtons = document.querySelectorAll(`button[onclick="fav('${attractionId}')"]`);
+
+    popupButtons.forEach(button => {
+      if (isFavorited) {
+        button.style.background = '#ef4444';
+        button.textContent = '즐겨찾기 제거';
+      } else {
+        button.style.background = '#10b981';
+        button.textContent = '즐겨찾기 추가';
+      }
+    });
+
+    const listButtons = document.querySelectorAll(`button[data-attraction-id="${attractionId}"]`);
+    listButtons.forEach(button => {
+      if (isFavorited) {
+        button.classList.add('favorited');
+        button.textContent = '즐겨찾기 되어있습니다.';
+      } else {
+        button.classList.remove('favorited');
+        button.textContent = '즐겨찾기';
+      }
+    });
   }
 
   function goto(id){

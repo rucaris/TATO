@@ -17,11 +17,15 @@
 
     <span sec:authorize="isAuthenticated()">
       <a th:href="@{/favorites}" class="btn">즐겨찾기</a>
+      <!-- 관광지 신청 링크 추가 -->
+      <a th:href="@{/favorites#submit}" class="btn" style="background: #10b981; color: white;">
+        ✨ 관광지 신청
+      </a>
       <form th:action="@{/logout}" method="post" style="display:inline">
-  <input type="hidden" th:if="${_csrf != null}"
-         th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-  <button type="submit" class="btn">로그아웃</button>
-</form>
+        <input type="hidden" th:if="${_csrf != null}"
+               th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+        <button type="submit" class="btn">로그아웃</button>
+      </form>
     </span>
   </nav>
 </header>
