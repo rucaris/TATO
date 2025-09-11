@@ -18,5 +18,15 @@ public class Attraction {
   private Double longitude;
   @Column(length=2000) private String description;
   @Column(length=2000) private String descriptionKo;
+  @Column(name = "spot_id")
+  private String spotId;
   private String imageUrl; //이미지 삽입 위해 추가했습니다.
+
+  @PrePersist
+  @PreUpdate
+  public void setSpotId() {
+    if (this.spotId == null && this.id != null) {
+      this.spotId = String.valueOf(this.id);
+    }
+  }
 }

@@ -1,6 +1,8 @@
 package com.tato.controller;
 
+import com.tato.model.AttractionProposal;
 import com.tato.repository.FavoriteRepository;
+import com.tato.service.AttractionProposalService;
 import com.tato.service.FavoriteService;
 import com.tato.service.UserService;
 import com.tato.service.ImageService;
@@ -26,6 +28,7 @@ public class FavoriteController {
     private final UserService userService;
     private final FavoriteRepository favoriteRepository;
     private final ImageService imageService; // 추가
+    private final AttractionProposalService attractionProposalService;
 
     @GetMapping("/favorites")
     public String favoritesPage(Model model, Principal principal) {
@@ -103,12 +106,12 @@ public class FavoriteController {
                 return "redirect:/favorites#submit";
             }
 
-            if (description == null || description.trim().length() < 10) {
-                ra.addFlashAttribute("submitError", "설명은 10자 이상 입력해주세요.");
+            if (description == null || description.trim().length() < 5) {
+                ra.addFlashAttribute("submitError", "설명은 5자 이상 입력해주세요.");
                 return "redirect:/favorites#submit";
             }
 
-            // 좌표 검증 (선택사항)
+            // 좌표 검증
             Double lat = null, lng = null;
             if (latitude != null && !latitude.trim().isEmpty()) {
                 try {
@@ -136,15 +139,19 @@ public class FavoriteController {
                 }
             }
 
-            // 실제 관광지 신청 로직
-            // 지금은 임시로 로그만 출력
-            log.info("관광지 신청 접수 완료:");
-            log.info("  - 신청자: {}", user.getNickname());
-            log.info("  - 관광지명: {}", name.trim());
-            log.info("  - 카테고리: {}", category.trim());
-            log.info("  - 주소: {}", address != null ? address.trim() : "미입력");
-            log.info("  - 좌표: {} / {}", lat != null ? lat : "미입력", lng != null ? lng : "미입력");
-            log.info("  - 설명: {}", description.trim());
+            AttractionProposal proposal = AttractionProposal.builder()
+                    .name(name.trim())
+                    .category(category.trim())
+                    .address(address != null ? address.trim() : null)
+                    .latitude(lat)
+                    .longitude(lng)
+                    .description(description.trim())
+                    .userId(user.getId())
+                    .build();
+
+            AttractionProposal savedProposal = attractionProposalService.submitProposal(proposal);
+
+            log.info("관광지 신청이 성공적으로 저장되었습니다. ID: {}", savedProposal.getId());
 
             ra.addFlashAttribute("submitSuccess",
                     "관광지 신청이 접수되었습니다! 관리자 검토 후 등록됩니다. 감사합니다!");
