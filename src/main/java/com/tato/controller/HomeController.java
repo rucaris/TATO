@@ -1,10 +1,13 @@
 package com.tato.controller;
 
+import com.tato.model.Attraction;
 import com.tato.service.ImageService;
 import com.tato.service.ReviewService;
 import com.tato.service.UserService;
 import com.tato.repository.AttractionRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -13,8 +16,10 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.security.Principal;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Controller
 @RequiredArgsConstructor
 public class HomeController {
@@ -42,6 +47,18 @@ public class HomeController {
       model.addAttribute("userEmail", user.getEmail());
     }
     return "attractions";
+  }
+
+  @GetMapping("/api/attractions")
+  @ResponseBody
+  public ResponseEntity<List<Attraction>> getAllAttractions() {
+    try {
+      List<Attraction> attractions = attractionRepository.findAll();
+      return ResponseEntity.ok(attractions);
+    } catch (Exception e) {
+      log.error("관광지 데이터 조회 중 오류", e);
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+    }
   }
 
   @GetMapping("/api/attractions/metadata")

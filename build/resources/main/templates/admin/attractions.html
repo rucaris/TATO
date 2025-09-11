@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>관리자 - 관광지 관리</title>
+  <meta name="_csrf" th:content="${_csrf.token}"/>
+  <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+  <link rel="stylesheet" href="/css/base.css">
+  <style>
+    :root{
+      --primary:#2563eb; --primary-hover:#1d4ed8;
+      --bg:#f8fafc; --text:#1e293b; --muted:#64748b; --border:#e2e8f0;
+      --shadow:0 1px 3px 0 rgb(0 0 0 / .1);
+    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{height:100%;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text)}
+
+    /* Header */
+    .header{height:64px;background:#fff;border-bottom:1px solid var(--border);
+      display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:1000;box-shadow:var(--shadow)}
+    .logo{font-size:24px;font-weight:800;color:var(--primary-color);text-decoration:none}
+    .header-nav{display:flex;gap:10px;align-items:center}
+    .btn{padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:#fff;color:var(--text);text-decoration:none;font-size:14px}
+    .btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
+    .btn:hover{filter:brightness(0.98)}
+    .user{font-size:14px;color:var(--muted)}
+
+    /* Layout */
+    .main{display:grid;grid-template-columns:380px 1fr;height:calc(100vh - 64px)}
+    @media (max-width:900px){.main{grid-template-columns:1fr;grid-template-rows:320px 1fr}}
+
+    /* Sidebar */
+    .side{background:#fff;border-right:1px solid var(--border);overflow:auto}
+    .side-sec{padding:20px 24px;border-bottom:1px solid var(--border)}
+    .title{font-size:18px;font-weight:700;margin-bottom:6px}
+    .subtitle{color:var(--muted);font-size:13px}
+    .search{display:flex;gap:8px;margin-top:12px}
+    .input{flex:1;padding:10px 12px;border:1px solid var(--border);border-radius:8px}
+    .input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgb(37 99 235 / .12)}
+    .pill-wrap{display:flex;flex-wrap:wrap;gap:8px}
+    .pill{padding:6px 10px;border:1px solid var(--border);border-radius:999px;font-size:12px;background:#fff;cursor:pointer}
+    .pill.active{background:var(--primary);border-color:var(--primary);color:#fff}
+
+    .list{padding:18px 24px}
+    .hint{font-size:12px;color:var(--muted);margin-bottom:10px}
+    .card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:10px;cursor:pointer;transition:.15s;box-shadow:var(--shadow)}
+    .card:hover{transform:translateY(-1px);border-color:var(--primary)}
+    .name{font-weight:700;margin-bottom:4px}
+    .meta{font-size:12px;color:var(--muted)}
+    .badge{display:inline-block;margin-top:6px;background:#eff6ff;color:var(--primary);border-radius:999px;padding:2px 8px;font-size:11px}
+
+    /* Map */
+    .map-wrap{position:relative}
+    #map{width:100%;height:100%}
+    .map-tools{position:absolute;top:14px;right:14px;display:flex;flex-direction:column;gap:8px;z-index:1000}
+    .tool{background:#fff;border:1px solid var(--border);border-radius:8px;padding:8px}
+
+    .admin-nav {
+      list-style: none;
+      padding: 0;
+    }
+    .admin-nav li {
+      margin-bottom: 10px;
+    }
+    .admin-nav li a {
+      display: block;
+      padding: 10px 15px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      text-decoration: none;
+      color: var(--text);
+      background-color: #fff;
+      transition: background-color 0.15s ease;
+    }
+    .admin-nav li a:hover {
+      background-color: var(--bg);
+    }
+
+    .admin-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    .admin-table th,
+    .admin-table td {
+      border: 1px solid var(--border);
+      padding: 8px;
+      text-align: left;
+    }
+    .admin-table th {
+      background-color: var(--bg);
+      font-weight: 700;
+    }
+
+    .user-list-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+    }
+    .user-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 15px;
+      box-shadow: var(--shadow);
+      transition: transform 0.15s ease;
+      cursor: pointer;
+    }
+    .user-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--primary);
+    }
+    .user-card .user-email {
+      font-weight: 700;
+      font-size: 1.1em;
+      margin-bottom: 5px;
+    }
+    .user-card .user-nickname {
+      color: var(--muted);
+      font-size: 0.9em;
+      margin-bottom: 10px;
+    }
+    .user-card .user-role {
+      display: inline-block;
+      background: var(--primary);
+      color: #fff;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 0.8em;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1001;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.4);
+    }
+    .modal-content {
+      background-color: #fefefe;
+      margin: 15% auto;
+      padding: 20px;
+      border: 1px solid #888;
+      border-radius: 12px;
+      width: 80%;
+      max-width: 500px;
+      box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+      animation-name: animatetop;
+      animation-duration: 0.4s
+    }
+    /* Add Animation */
+    @-webkit-keyframes animatetop {
+      from {top:-300px; opacity:0}
+      to {top:15%; opacity:1}
+    }
+    @keyframes animatetop {
+      from {top:-300px; opacity:0}
+      to {top:15%; opacity:1}
+    }
+    .close-button {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+    }
+    .close-button:hover,
+    .close-button:focus {
+      color: black;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .modal-buttons {
+      margin-top: 20px;
+      text-align: right;
+    }
+    .modal-buttons .btn {
+      margin-left: 10px;
+    }
+    .modal-buttons select {
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      margin-right: 10px;
+    }
+
+    .attraction-list-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+    }
+    .attraction-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 15px;
+      box-shadow: var(--shadow);
+      transition: transform 0.15s ease;
+      cursor: pointer;
+    }
+    .attraction-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--primary);
+    }
+    .attraction-card .attraction-name {
+      font-weight: 700;
+      font-size: 1.1em;
+      margin-bottom: 5px;
+    }
+    .attraction-card .attraction-category {
+      color: var(--muted);
+      font-size: 0.9em;
+      margin-bottom: 10px;
+    }
+    .attraction-card .attraction-address {
+      display: inline-block;
+      background: var(--primary);
+      color: #fff;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 0.8em;
+    }
+  </style>
+</head>
+<body>
+<div th:replace="fragments/admin-header :: header"></div>
+
+<main class="main">
+  <aside class="side">
+    <section class="side-sec">
+      <div class="title">관리자 메뉴</div>
+      <nav>
+        <ul class="admin-nav">
+          <li><a th:href="@{/admin/users}">사용자 관리</a></li>
+          <li><a th:href="@{/admin/content}">관광지 관리</a></li>
+          <li><a th:href="@{/admin/settings}">설정</a></li>
+        </ul>
+      </nav>
+    </section>
+  </aside>
+  <section style="padding:20px 24px;">
+    <h1>관광지 관리</h1>
+    <button type="button" class="btn primary" id="newAttractionBtn" style="margin-bottom: 20px;">새 관광지 추가</button>
+    <div class="attraction-list-container">
+      <div class="attraction-card" th:each="attraction : ${attractions}" th:data-attraction-id="${attraction.id}">
+        <div class="attraction-name" th:text="${attraction.name}"></div>
+        <div class="attraction-category" th:text="${attraction.category}"></div>
+        <span class="attraction-address" th:text="${attraction.address}"></span>
+      </div>
+    </div>
+    <p th:if="${#lists.isEmpty(attractions)}">관광지가 없습니다.</p>
+  </section>
+</main>
+<div id="attractionModal" class="modal">
+  <div class="modal-content">
+    <span class="close-button">&times;</span>
+    <h2>관광지 상세 정보</h2>
+    <form id="attractionForm">
+      <input type="hidden" id="attractionId" name="id">
+      <p>
+        <label for="attractionName">이름:</label>
+        <input type="text" id="attractionName" name="name" class="input" required>
+      </p>
+      <p>
+        <label for="attractionCategory">카테고리:</label>
+        <input type="text" id="attractionCategory" name="category" class="input" required>
+      </p>
+      <p>
+        <label for="attractionAddress">주소:</label>
+        <input type="text" id="attractionAddress" name="address" class="input" required>
+      </p>
+      <p>
+        <label for="attractionLatitude">위도:</label>
+        <input type="number" step="any" id="attractionLatitude" name="latitude" class="input" required>
+      </p>
+      <p>
+        <label for="attractionLongitude">경도:</label>
+        <input type="number" step="any" id="attractionLongitude" name="longitude" class="input" required>
+      </p>
+      <p>
+        <label for="attractionDescription">설명:</label>
+        <textarea id="attractionDescription" name="description" class="input" rows="5"></textarea>
+      </p>
+      <div class="modal-buttons">
+        <button type="button" class="btn primary" id="saveAttractionBtn">저장</button>
+        <button type="button" class="btn" id="deleteAttractionBtn">삭제</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  const attractionModal = document.getElementById('attractionModal');
+  const closeButton = document.querySelector('.close-button');
+  const attractionForm = document.getElementById('attractionForm');
+  const attractionIdInput = document.getElementById('attractionId');
+  const attractionNameInput = document.getElementById('attractionName');
+  const attractionCategoryInput = document.getElementById('attractionCategory');
+  const attractionAddressInput = document.getElementById('attractionAddress');
+  const attractionDescriptionInput = document.getElementById('attractionDescription');
+  const attractionLatitudeInput = document.getElementById('attractionLatitude');
+  const attractionLongitudeInput = document.getElementById('attractionLongitude');
+  const saveAttractionBtn = document.getElementById('saveAttractionBtn');
+  const deleteAttractionBtn = document.getElementById('deleteAttractionBtn');
+  const newAttractionBtn = document.getElementById('newAttractionBtn');
+
+  // 새 관광지 버튼 클릭 이벤트
+  newAttractionBtn.addEventListener('click', function() {
+    openModal(true); // 새 관광지 추가 모드
+  });
+
+  // 모달 열기
+  document.querySelectorAll('.attraction-card').forEach(card => {
+    card.addEventListener('click', function() {
+      const attractionId = this.dataset.attractionId;
+      fetchAttractionDetails(attractionId);
+    });
+  });
+
+  // 모달 종료
+  closeButton.addEventListener('click', closeModal);
+  window.addEventListener('click', function(event) {
+    if (event.target == attractionModal) {
+      closeModal();
+    }
+  });
+
+  function openModal(isNew = false) {
+    attractionModal.style.display = 'block';
+    if (isNew) {
+      attractionForm.reset();
+      attractionIdInput.value = ''; // 새 항목을 위해 ID 비움
+      saveAttractionBtn.textContent = '등록'; // 버튼 텍스트 변경
+      deleteAttractionBtn.style.display = 'none'; // 삭제 버튼 숨김
+    } else {
+      saveAttractionBtn.textContent = '수정'; // 기존 항목 수정
+      deleteAttractionBtn.style.display = 'inline-block'; // 삭제 버튼 표시
+    }
+  }
+
+  function closeModal() {
+    attractionModal.style.display = 'none';
+    attractionForm.reset(); // 폼 필드 초기화
+    // 버튼 상태 초기화
+    saveAttractionBtn.textContent = '수정';
+    deleteAttractionBtn.style.display = 'inline-block';
+  }
+
+  async function fetchAttractionDetails(id) {
+    try {
+      const response = await fetch(`/api/admin/attractions/${id}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const attraction = await response.json();
+      populateModal(attraction);
+      openModal(false);
+    } catch (error) {
+      console.error('Error fetching attraction details:', error);
+      alert('관광지 정보를 불러오는 데 실패했습니다.');
+    }
+  }
+
+  function populateModal(attraction) {
+    attractionIdInput.value = attraction.id;
+    attractionNameInput.value = attraction.name;
+    attractionCategoryInput.value = attraction.category;
+    attractionAddressInput.value = attraction.address;
+    attractionDescriptionInput.value = attraction.description || '';
+    attractionLatitudeInput.value = attraction.latitude || '';
+    attractionLongitudeInput.value = attraction.longitude || '';
+  }
+
+  // 저장
+  saveAttractionBtn.addEventListener('click', async function() {
+    const id = attractionIdInput.value;
+    const isNew = id === '';
+    const method = isNew ? 'POST' : 'PUT';
+    const url = isNew ? '/api/admin/attractions' : `/api/admin/attractions/${id}`;
+
+    const attractionData = {
+      name: attractionNameInput.value,
+      category: attractionCategoryInput.value,
+      address: attractionAddressInput.value,
+      description: attractionDescriptionInput.value,
+      latitude: parseFloat(attractionLatitudeInput.value),
+      longitude: parseFloat(attractionLongitudeInput.value)
+    };
+
+    const csrf = getCsrfToken();
+    const headers = {
+      'Content-Type': 'application/json'
+    };
+    if (csrf.token && csrf.header) {
+      headers[csrf.header] = csrf.token;
+    }
+
+    try {
+      const response = await fetch(url, {
+        method: method,
+        headers: headers,
+        body: JSON.stringify(attractionData)
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+      }
+
+      alert(isNew ? '관광지가 성공적으로 등록되었습니다.' : '관광지 정보가 성공적으로 수정되었습니다.');
+      closeModal();
+      location.reload();
+    } catch (error) {
+      console.error('Error saving attraction:', error);
+      alert(isNew ? '관광지 등록에 실패했습니다: ' + error.message : '관광지 정보 수정에 실패했습니다: ' + error.message);
+    }
+  });
+
+  // 삭제
+  deleteAttractionBtn.addEventListener('click', async function() {
+    const id = attractionIdInput.value;
+    if (confirm('정말로 이 관광지를 삭제하시겠습니까?')) {
+      const csrf = getCsrfToken();
+      const headers = {};
+      if (csrf.token && csrf.header) {
+        headers[csrf.header] = csrf.token;
+      }
+
+      try {
+        const response = await fetch(`/api/admin/attractions/${id}`, {
+          method: 'DELETE',
+          headers: headers
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        alert('관광지가 성공적으로 삭제되었습니다.');
+        closeModal();
+        location.reload();
+      } catch (error) {
+        console.error('Error deleting attraction:', error);
+        alert('관광지 삭제에 실패했습니다.');
+      }
+    }
+  });
+
+  function getCsrfToken() {
+    const csrfToken = document.querySelector('meta[name="_csrf"]');
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]');
+    return {
+      token: csrfToken ? csrfToken.getAttribute('content') : null,
+      header: csrfHeader ? csrfHeader.getAttribute('content') : null
+    };
+  }
+
+</script>
+</body>
+</html>

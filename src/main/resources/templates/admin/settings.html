@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>관리자 - 설정</title>
+  <meta name="_csrf" th:content="${_csrf.token}"/>
+  <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+  <link rel="stylesheet" href="/css/base.css">
+  <style>
+    :root{
+      --primary:#2563eb; --primary-hover:#1d4ed8;
+      --bg:#f8fafc; --text:#1e293b; --muted:#64748b; --border:#e2e8f0;
+      --shadow:0 1px 3px 0 rgb(0 0 0 / .1);
+    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{height:100%;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text)}
+
+    /* Header */
+    .header{height:64px;background:#fff;border-bottom:1px solid var(--border);
+      display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:1000;box-shadow:var(--shadow)}
+    .logo{font-size:24px;font-weight:800;color:var(--primary-color);text-decoration:none}
+    .header-nav{display:flex;gap:10px;align-items:center}
+    .btn{padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:#fff;color:var(--text);text-decoration:none;font-size:14px}
+    .btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
+    .btn:hover{filter:brightness(0.98)}
+    .user{font-size:14px;color:var(--muted)}
+
+    /* Layout */
+    .main{display:grid;grid-template-columns:380px 1fr;height:calc(100vh - 64px)}
+    @media (max-width:900px){.main{grid-template-columns:1fr;grid-template-rows:320px 1fr}}
+
+    /* Sidebar */
+    .side{background:#fff;border-right:1px solid var(--border);overflow:auto}
+    .side-sec{padding:20px 24px;border-bottom:1px solid var(--border)}
+    .title{font-size:18px;font-weight:700;margin-bottom:6px}
+    .subtitle{color:var(--muted);font-size:13px}
+    .search{display:flex;gap:8px;margin-top:12px}
+    .input{flex:1;padding:10px 12px;border:1px solid var(--border);border-radius:8px}
+    .input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgb(37 99 235 / .12)}
+    .pill-wrap{display:flex;flex-wrap:wrap;gap:8px}
+    .pill{padding:6px 10px;border:1px solid var(--border);border-radius:999px;font-size:12px;background:#fff;cursor:pointer}
+    .pill.active{background:var(--primary);border-color:var(--primary);color:#fff}
+
+    .list{padding:18px 24px}
+    .hint{font-size:12px;color:var(--muted);margin-bottom:10px}
+    .card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:10px;cursor:pointer;transition:.15s;box-shadow:var(--shadow)}
+    .card:hover{transform:translateY(-1px);border-color:var(--primary)}
+    .name{font-weight:700;margin-bottom:4px}
+    .meta{font-size:12px;color:var(--muted)}
+    .badge{display:inline-block;margin-top:6px;background:#eff6ff;color:var(--primary);border-radius:999px;padding:2px 8px;font-size:11px}
+
+    /* Map */
+    .map-wrap{position:relative}
+    #map{width:100%;height:100%}
+    .map-tools{position:absolute;top:14px;right:14px;display:flex;flex-direction:column;gap:8px;z-index:1000}
+    .tool{background:#fff;border:1px solid var(--border);border-radius:8px;padding:8px}
+
+    .admin-nav {
+      list-style: none;
+      padding: 0;
+    }
+    .admin-nav li {
+      margin-bottom: 10px;
+    }
+    .admin-nav li a {
+      display: block;
+      padding: 10px 15px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      text-decoration: none;
+      color: var(--text);
+      background-color: #fff;
+      transition: background-color 0.15s ease;
+    }
+    .admin-nav li a:hover {
+      background-color: var(--bg);
+    }
+
+    .admin-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    .admin-table th,
+    .admin-table td {
+      border: 1px solid var(--border);
+      padding: 8px;
+      text-align: left;
+    }
+    .admin-table th {
+      background-color: var(--bg);
+      font-weight: 700;
+    }
+
+    .user-list-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+    }
+    .user-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 15px;
+      box-shadow: var(--shadow);
+      transition: transform 0.15s ease;
+      cursor: pointer;
+    }
+    .user-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--primary);
+    }
+    .user-card .user-email {
+      font-weight: 700;
+      font-size: 1.1em;
+      margin-bottom: 5px;
+    }
+    .user-card .user-nickname {
+      color: var(--muted);
+      font-size: 0.9em;
+      margin-bottom: 10px;
+    }
+    .user-card .user-role {
+      display: inline-block;
+      background: var(--primary);
+      color: #fff;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 0.8em;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1001;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.4);
+    }
+    .modal-content {
+      background-color: #fefefe;
+      margin: 15% auto;
+      padding: 20px;
+      border: 1px solid #888;
+      border-radius: 12px;
+      width: 80%;
+      max-width: 500px;
+      box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+      animation-name: animatetop;
+      animation-duration: 0.4s
+    }
+    /* Add Animation */
+    @-webkit-keyframes animatetop {
+      from {top:-300px; opacity:0}
+      to {top:15%; opacity:1}
+    }
+    @keyframes animatetop {
+      from {top:-300px; opacity:0}
+      to {top:15%; opacity:1}
+    }
+    .close-button {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+    }
+    .close-button:hover,
+    .close-button:focus {
+      color: black;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .modal-buttons {
+      margin-top: 20px;
+      text-align: right;
+    }
+    .modal-buttons .btn {
+      margin-left: 10px;
+    }
+    .modal-buttons select {
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      margin-right: 10px;
+    }
+
+    .attraction-list-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+    }
+    .attraction-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 15px;
+      box-shadow: var(--shadow);
+      transition: transform 0.15s ease;
+      cursor: pointer;
+    }
+    .attraction-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--primary);
+    }
+    .attraction-card .attraction-name {
+      font-weight: 700;
+      font-size: 1.1em;
+      margin-bottom: 5px;
+    }
+    .attraction-card .attraction-category {
+      color: var(--muted);
+      font-size: 0.9em;
+      margin-bottom: 10px;
+    }
+    .attraction-card .attraction-address {
+      display: inline-block;
+      background: var(--primary);
+      color: #fff;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 0.8em;
+    }
+    .attraction-request-list-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+    }
+    .attraction-request-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 15px;
+      box-shadow: var(--shadow);
+      transition: transform 0.15s ease;
+      cursor: pointer;
+    }
+    .attraction-request-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--primary);
+    }
+    .attraction-request-card .attraction-name {
+      font-weight: 700;
+      font-size: 1.1em;
+      margin-bottom: 5px;
+    }
+    .attraction-request-card .applicant-email {
+      color: var(--muted);
+      font-size: 0.9em;
+      margin-bottom: 10px;
+    }
+    .attraction-request-card .request-date {
+      font-size: 0.8em;
+      color: var(--muted);
+    }
+    .attraction-request-card .request-status {
+      display: inline-block;
+      margin-top: 6px;
+      background: #eff6ff;
+      color: var(--primary);
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 0.8em;
+    }
+  </style>
+</head>
+<body>
+<div th:replace="fragments/admin-header :: header"></div>
+
+<main class="main">
+  <aside class="side">
+    <section class="side-sec">
+      <div class="title">관리자 메뉴</div>
+      <nav>
+        <ul class="admin-nav">
+          <li><a th:href="@{/admin/users}">사용자 관리</a></li>
+          <li><a th:href="@{/admin/content}">관광지 관리</a></li>
+          <li><a th:href="@{/admin/settings}" class="active">설정</a></li>
+        </ul>
+      </nav>
+    </section>
+  </aside>
+  <section style="padding:20px 24px;">
+    <h1>관광지 등록 승인</h1>
+    <div class="attraction-request-list-container">
+      <div class="attraction-request-card" th:each="request : ${pendingRequests}" th:data-request-id="${request.id}">
+        <div class="attraction-name" th:text="${request.name}"></div>
+        <div class="applicant-email" th:text="${request.userId}"></div>
+        <div class="request-date" th:text="${#temporals.format(request.requestDate, 'yyyy-MM-dd')}"></div>
+      </div>
+      <p th:if="${#lists.isEmpty(pendingRequests)}">대기중인 관광지 등록 요청이 없습니다.</p>
+    </div>
+  </section>
+</main>
+
+<div id="requestDetailModal" class="modal">
+  <div class="modal-content">
+    <span class="close-button">&times;</span>
+    <h2>관광지 등록 요청 상세</h2>
+    <p><strong>ID:</strong> <span id="modalRequestId"></span></p>
+    <p><strong>관광지명:</strong> <span id="modalAttractionName"></span></p>
+    <p><strong>카테고리:</strong> <span id="modalAttractionCategory"></span></p>
+    <p><strong>주소:</strong> <span id="modalAttractionAddress"></span></p>
+    <p><strong>설명:</strong> <span id="modalAttractionDescription"></span></p>
+    <p><strong>신청자 ID:</strong> <span id="modalApplicantEmail"></span></p>
+    <p><strong>신청일:</strong> <span id="modalRequestDate"></span></p>
+
+    <div class="modal-buttons">
+      <button class="btn primary" id="approveRequestBtn">승인</button>
+      <button class="btn" id="rejectRequestBtn">거절</button>
+    </div>
+  </div>
+</div>
+
+<script th:inline="javascript">
+  document.addEventListener('DOMContentLoaded', function() {
+    const requestDetailModal = document.getElementById('requestDetailModal');
+    const closeButton = requestDetailModal.querySelector('.close-button');
+    const approveRequestBtn = document.getElementById('approveRequestBtn');
+    const rejectRequestBtn = document.getElementById('rejectRequestBtn');
+
+    document.querySelectorAll('.attraction-request-card').forEach(card => {
+      card.addEventListener('click', function() {
+        const requestId = this.dataset.requestId;
+        fetchRequestDetails(requestId);
+      });
+    });
+
+    closeButton.addEventListener('click', closeModal);
+    window.addEventListener('click', function(event) {
+      if (event.target == requestDetailModal) {
+        closeModal();
+      }
+    });
+
+    function openModal() {
+      requestDetailModal.style.display = 'block';
+    }
+
+    function closeModal() {
+      requestDetailModal.style.display = 'none';
+    }
+
+    async function fetchRequestDetails(id) {
+      try {
+        const response = await fetch(`/api/admin/attraction-requests/${id}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const request = await response.json();
+        populateModal(request);
+        openModal();
+      } catch (error) {
+        console.error('Error fetching request details:', error);
+        alert('요청 정보를 불러오는 데 실패했습니다.');
+      }
+    }
+
+    function populateModal(request) {
+      document.getElementById('modalRequestId').textContent = request.id;
+      document.getElementById('modalAttractionName').textContent = request.name;
+      document.getElementById('modalAttractionCategory').textContent = request.category;
+      document.getElementById('modalAttractionAddress').textContent = request.address;
+      document.getElementById('modalAttractionDescription').textContent = request.description || '없음';
+      document.getElementById('modalApplicantEmail').textContent = request.userId;
+      document.getElementById('modalRequestDate').textContent = new Date(request.requestDate).toLocaleDateString('ko-KR');
+      requestDetailModal.setAttribute('data-current-request-id', request.id);
+    }
+
+    approveRequestBtn.addEventListener('click', async function() {
+      const requestId = requestDetailModal.getAttribute('data-current-request-id');
+      if (confirm('정말로 이 관광지 등록 요청을 승인하시겠습니까(?')) {
+        await updateRequestStatus(requestId, 'APPROVED');
+      }
+    });
+
+    rejectRequestBtn.addEventListener('click', async function() {
+      const requestId = requestDetailModal.getAttribute('data-current-request-id');
+      if (confirm('정말로 이 관광지 등록 요청을 거절하시겠습니까(?')) {
+        await updateRequestStatus(requestId, 'REJECTED');
+      }
+    });
+
+    async function updateRequestStatus(requestId, status) {
+      const csrf = getCsrfToken();
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+      if (csrf.token && csrf.header) {
+        headers[csrf.header] = csrf.token;
+      }
+
+      try {
+        const response = await fetch(`/api/admin/attraction-requests/${requestId}/status`, {
+          method: 'PUT',
+          headers: headers,
+          body: JSON.stringify({ status: status })
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+        }
+
+        alert(`요청이 성공적으로 ${status === 'APPROVED' ? '승인' : '거절'}되었습니다.`);
+        closeModal();
+        location.reload();
+      } catch (error) {
+        console.error('Error updating request status:', error);
+        alert(`요청 ${status === 'APPROVED' ? '승인' : '거절'}에 실패했습니다: ` + error.message);
+      }
+    }
+
+    function getCsrfToken() {
+      const csrfToken = document.querySelector('meta[name="_csrf"]');
+      const csrfHeader = document.querySelector('meta[name="_csrf_header"]');
+      return {
+        token: csrfToken ? csrfToken.getAttribute('content') : null,
+        header: csrfHeader ? csrfHeader.getAttribute('content') : null
+      };
+    }
+  });
+</script>
+</body>
+</html>

@@ -4,6 +4,8 @@
   <meta charset="utf-8" />
   <title>즐겨찾기 - TATO</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="_csrf" th:content="${_csrf.token}"/>
+  <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
   <link th:href="@{/css/base.css}" rel="stylesheet">
 
   <style>
@@ -18,22 +20,181 @@
     .btn-primary{background:var(--primary-color);color:#fff}.btn-primary:hover{background:var(--primary-hover)}
     .btn-secondary{background:#f1f5f9;color:var(--text-primary)} .btn-secondary:hover{background:#e2e8f0}
     .btn-danger{background:#ef4444;color:#fff} .btn-danger:hover{background:#dc2626}
+    .btn-success{background:#10b981;color:#fff} .btn-success:hover{background:#059669}
     .main{max-width:1200px;margin:0 auto;padding:24px}
     .breadcrumb{margin-bottom:16px;color:var(--text-secondary);font-size:14px}
     .breadcrumb a{color:inherit;text-decoration:none}.breadcrumb a:hover{color:var(--primary-color)}
     .page-title{font-size:28px;font-weight:700;margin:6px 0 20px}
     .stats{background:#fff;border-radius:16px;padding:20px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;box-shadow:var(--card-shadow)}
     .stats h3{font-size:16px;font-weight:600;margin-bottom:4px}.stats strong{font-size:24px;color:var(--primary-color)}
-    .panel{background:#fff;border-radius:16px;padding:20px;box-shadow:var(--card-shadow)}
+    .panel{background:#fff;border-radius:16px;padding:20px;box-shadow:var(--card-shadow);margin-bottom:20px}
     .panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border)}
     .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
-    .card{border:1px solid var(--border);border-radius:12px;overflow:hidden;background:#fff;transition:.2s;cursor:pointer}
+    .card{border:1px solid var(--border);border-radius:12px;overflow:hidden;background:#fff;transition:.2s;cursor:pointer;position:relative}
     .card:hover{border-color:var(--primary-color);transform:translateY(-2px);box-shadow:0 8px 24px -8px rgb(0 0 0 / .12)}
     .thumb{height:160px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);display:flex;align-items:center;justify-content:center;color:#fff;font-size:44px}
     .card-body{padding:14px}.title{font-weight:700;margin-bottom:6px}.meta{font-size:13px;color:var(--text-secondary);margin-bottom:10px}
     .badge{background:#eff6ff;color:var(--primary-color);padding:2px 8px;border-radius:10px;font-size:12px}
     .row{display:flex;align-items:center;gap:8px;justify-content:space-between}
-    @media (max-width:768px){.page-title{font-size:24px}.stats{flex-direction:column;gap:10px}}
+
+    /* 카테고리 스타일 */
+    .categories-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+      margin-bottom: 10px;
+    }
+    .category-tag {
+      background: #eff6ff;
+      color: #2563eb;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      border: 1px solid #e0f2fe;
+      font-weight: 500;
+      display: inline-block;
+    }
+    .category-tag.primary {
+      background: #2563eb !important;
+      color: #fff !important;
+      border-color: #2563eb !important;
+      font-weight: 600 !important;
+    }
+
+    /* 즐겨찾기 해제 버튼 스타일 */
+    .favorite-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 10px;
+    }
+
+    .btn-unfavorite {
+      background: #ef4444;
+      color: #fff;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-unfavorite:hover {
+      background: #dc2626;
+      transform: translateY(-1px);
+    }
+
+    /* 관광지 신청 폼 스타일 */
+    .submit-form {
+      margin-top: 20px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group.full {
+      grid-column: 1 / -1;
+    }
+
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fff;
+      font-size: 14px;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(37,99,235,.12);
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .error {
+      color: #ef4444;
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    .alert {
+      background: #d4edda;
+      color: #155724;
+      border-left: 4px solid #28a745;
+      padding: 12px 14px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+    }
+
+    .alert.error {
+      background: #f8d7da;
+      color: #721c24;
+      border-left-color: #dc3545;
+    }
+
+    /* 탭 스타일 */
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 20px;
+    }
+
+    .tab-button {
+      padding: 12px 20px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .tab-button.active {
+      color: var(--primary-color);
+      border-bottom-color: var(--primary-color);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    @media (max-width:768px){
+      .page-title{font-size:24px}
+      .stats{flex-direction:column;gap:10px}
+      .form-grid{grid-template-columns:1fr}
+    }
   </style>
 </head>
 <body>
@@ -54,67 +215,348 @@
 </header>
 
 <main class="main">
-  <nav class="breadcrumb"><a th:href="@{/}">홈</a> &gt; <strong>즐겨찾기</strong></nav>
-  <h1 class="page-title">내 즐겨찾기</h1>
+  <nav class="breadcrumb"><a th:href="@{/}">홈</a> &gt; <strong>마이페이지</strong></nav>
+  <h1 class="page-title">마이페이지</h1>
 
   <section class="stats">
     <div><h3>총 즐겨찾기</h3><strong th:text="${favoritesCount}">0</strong></div>
     <div><a th:href="@{/attractions}" class="btn btn-primary">관광지 더 보러가기</a></div>
   </section>
 
-  <section class="panel">
-    <div class="panel-head">
-      <h2 style="font-size:18px;font-weight:700;">찜한 관광지</h2>
-      <div style="color:var(--text-secondary);font-size:13px" th:if="${#lists.isEmpty(favorites)}">아직 찜이 없습니다</div>
-    </div>
+  <!-- 탭 네비게이션 -->
+  <div class="tabs">
+    <button class="tab-button active" onclick="switchTab('favorites')">내 즐겨찾기</button>
+    <button class="tab-button" onclick="switchTab('submit')">관광지 신청</button>
+  </div>
 
-    <div class="grid" th:if="${!#lists.isEmpty(favorites)}">
-      <!-- 카드 반복 -->
-      <article class="card" th:each="fav : ${favorites}" th:onclick="|location.href='@{/attractions/{id}(id=${fav.attractionId})}'|">
-        <div class="thumb">
-          <img th:if="${fav.imageUrl}"
-               th:src="${fav.imageUrl}"
-               th:alt="${fav.name} + ' 이미지'"
-               style="width:100%; height:100%; object-fit:cover; border-radius:8px;">
-          <div th:unless="${fav.imageUrl}"
-               style="display:flex; align-items:center; justify-content:center; height:100%; color:#666;">
-            📍
-          </div>
-        </div>
-        <div class="card-body">
-          <div class="title" th:text="${fav.name}">관광지명</div>
-          <div class="meta" th:text="${fav.address}">주소</div>
-          <div class="row">
-            <div class="categories-container" style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px;">
-              <!-- Thymeleaf로 쉼표로 분할하여 반복 -->
-              <th:block th:each="category, iterStat : ${#strings.listSplit(fav.category, ',')}">
-        <span th:class="'category-tag' + (${iterStat.first} ? ' primary' : '')"
-              th:text="${#strings.trim(category)}"
-              style="background: #eff6ff; color: #2563eb; padding: 4px 10px; border-radius: 12px; font-size: 12px; border: 1px solid #e0f2fe; font-weight: 500;">
-            카테고리
-        </span>
-              </th:block>
+  <!-- 즐겨찾기 탭 -->
+  <div id="favorites-tab" class="tab-content active">
+    <section class="panel">
+      <div class="panel-head">
+        <h2 style="font-size:18px;font-weight:700;">찜한 관광지</h2>
+        <div style="color:var(--text-secondary);font-size:13px" th:if="${#lists.isEmpty(favorites)}">아직 찜이 없습니다</div>
+      </div>
+
+      <div class="grid" th:if="${!#lists.isEmpty(favorites)}">
+        <!-- 카드 반복 -->
+        <article class="card" th:each="fav : ${favorites}" th:data-attraction-id="${fav.attractionId}">
+          <!-- 상세보기는 카드 클릭으로 -->
+          <div class="card-clickable" th:onclick="|location.href='@{/attractions/{id}(id=${fav.attractionId})}'|">
+            <div class="thumb">
+              <img th:if="${fav.imageUrl}"
+                   th:src="${fav.imageUrl}"
+                   th:alt="${fav.name} + ' 이미지'"
+                   style="width:100%; height:100%; object-fit:cover; border-radius:8px;">
+              <div th:unless="${fav.imageUrl}"
+                   style="display:flex; align-items:center; justify-content:center; height:100%; color:#666;">
+                📍
+              </div>
             </div>
+            <div class="card-body">
+              <div class="title" th:text="${fav.name}">관광지명</div>
+              <div class="meta" th:text="${fav.address}">주소</div>
 
-            <!-- 추가 CSS (인라인으로 테스트) -->
-            <style>
-              .category-tag.primary {
-                background: #2563eb !important;
-                color: #fff !important;
-                border-color: #2563eb !important;
-                font-weight: 600 !important;
-              }
-            </style>
-            <form th:action="@{/favorites/{id}(id=${fav.attractionId})}" method="post"
-                  th:object="${fav}" onsubmit="return confirm('찜을 해제할까요?')">
-              <input type="hidden" name="_method" value="delete"/>
-              <button type="submit" class="btn btn-danger">찜 해제</button>
-            </form>
+              <div class="categories-container">
+                <!-- Thymeleaf로 쉼표로 분할하여 반복 -->
+                <th:block th:each="category, iterStat : ${#strings.listSplit(fav.category, ',')}">
+                  <span th:class="'category-tag' + (${iterStat.first} ? ' primary' : '')"
+                        th:text="${#strings.trim(category)}">
+                    카테고리
+                  </span>
+                </th:block>
+              </div>
+            </div>
+          </div>
+
+          <!-- 즐겨찾기 해제 버튼 - 카드 클릭 이벤트와 분리 -->
+          <div class="favorite-actions" style="padding: 0 14px 14px;">
+            <span style="font-size: 12px; color: var(--text-secondary);">
+              즐겨찾기
+            </span>
+            <button type="button"
+                    class="btn-unfavorite"
+                    th:data-attraction-id="${fav.attractionId}"
+                    onclick="removeFavorite(this, event)">
+              해제
+            </button>
+          </div>
+        </article>
+      </div>
+    </section>
+  </div>
+
+  <!-- 관광지 신청 탭 -->
+  <div id="submit-tab" class="tab-content">
+    <section class="panel">
+      <div class="panel-head">
+        <h2 style="font-size:18px;font-weight:700;">관광지 신청</h2>
+        <div style="color:var(--text-secondary);font-size:13px">새로운 도쿄 관광지를 추천해 주세요</div>
+      </div>
+
+      <!-- 성공/에러 메시지 -->
+      <div th:if="${submitSuccess}" class="alert">
+        <span th:text="${submitSuccess}">성공 메시지</span>
+      </div>
+
+      <div th:if="${submitError}" class="alert error">
+        <span th:text="${submitError}">에러 메시지</span>
+      </div>
+
+      <form class="submit-form" th:action="@{/attractions/submit}" method="post" novalidate>
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="name">관광지명 *</label>
+            <input id="name" name="name" type="text" placeholder="예: 센소지" required/>
+          </div>
+
+          <div class="form-group">
+            <label for="category">카테고리 *</label>
+            <select id="category" name="category" required>
+              <option value="">카테고리 선택</option>
+              <option value="신사·사찰">신사·사찰</option>
+              <option value="미술관·박물관">미술관·박물관</option>
+              <option value="공원·문화시설">공원·문화시설</option>
+              <option value="쇼핑">쇼핑</option>
+              <option value="음식점">음식점</option>
+              <option value="엔터테인먼트">엔터테인먼트</option>
+              <option value="자연·산·공원">자연·산·공원</option>
+              <option value="기타">기타</option>
+            </select>
+          </div>
+
+          <div class="form-group full">
+            <label for="address">주소</label>
+            <input id="address" name="address" type="text" placeholder="예: 도쿄도 다이토구 아사쿠사 2-3-1"/>
+          </div>
+
+          <div class="form-group">
+            <label for="latitude">위도</label>
+            <input id="latitude" name="latitude" type="text" placeholder="예: 35.714765" pattern="[0-9.-]+"/>
+          </div>
+
+          <div class="form-group">
+            <label for="longitude">경도</label>
+            <input id="longitude" name="longitude" type="text" placeholder="예: 139.796727" pattern="[0-9.-]+"/>
           </div>
         </div>
-      </article>
-    </div>
-  </section>
+
+        <div class="form-group">
+          <label for="description">설명 *</label>
+          <textarea id="description" name="description" placeholder="관광지에 대한 자세한 설명을 입력해주세요..." required></textarea>
+        </div>
+
+        <button class="btn btn-success" type="submit" style="width: 100%; padding: 12px; font-size: 16px;">
+          신청하기
+        </button>
+      </form>
+
+      <div style="margin-top: 16px; text-align: center; color: var(--text-secondary); font-size: 14px;">
+        신청하신 관광지는 관리자 검토 후 등록됩니다.
+      </div>
+    </section>
+  </div>
 </main>
+
+<script>
+  // 탭 전환 함수
+  function switchTab(tabName) {
+    // 모든 탭 버튼에서 active 클래스 제거
+    document.querySelectorAll('.tab-button').forEach(btn => {
+      btn.classList.remove('active');
+    });
+
+    // 모든 탭 콘텐츠 숨기기
+    document.querySelectorAll('.tab-content').forEach(content => {
+      content.classList.remove('active');
+    });
+
+    // 선택된 탭 활성화
+    event.target.classList.add('active');
+    document.getElementById(tabName + '-tab').classList.add('active');
+  }
+
+  // CSRF 토큰 가져오기
+  function getCsrfToken() {
+    const csrfToken = document.querySelector('meta[name="_csrf"]');
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]');
+    return {
+      token: csrfToken ? csrfToken.getAttribute('content') : null,
+      header: csrfHeader ? csrfHeader.getAttribute('content') : null
+    };
+  }
+
+  // 즐겨찾기 해제 함수
+  async function removeFavorite(button, event) {
+    // 이벤트 버블링 방지 (카드 클릭 이벤트와 충돌 방지)
+    event.preventDefault();
+    event.stopPropagation();
+
+    const attractionId = button.getAttribute('data-attraction-id');
+
+    if (!confirm('정말로 즐겨찾기를 해제하시겠습니까?')) {
+      return;
+    }
+
+    try {
+      const csrf = getCsrfToken();
+      const headers = {
+        'Content-Type': 'application/json',
+      };
+
+      if (csrf.token && csrf.header) {
+        headers[csrf.header] = csrf.token;
+      }
+
+      // 버튼 비활성화
+      button.disabled = true;
+      button.textContent = '처리중...';
+
+      const response = await fetch(`/favorites/${encodeURIComponent(attractionId)}`, {
+        method: 'POST',
+        headers: headers
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (result.success) {
+        // 성공시 카드 애니메이션과 함께 제거
+        const card = button.closest('.card');
+        card.style.transform = 'translateY(-10px)';
+        card.style.opacity = '0';
+
+        setTimeout(() => {
+          card.remove();
+
+          // 즐겨찾기 개수 업데이트
+          updateFavoriteCount();
+
+          // 모든 카드가 제거되었는지 확인
+          checkEmptyState();
+        }, 300);
+
+        // 성공 메시지 (선택사항)
+        showToast('즐겨찾기가 해제되었습니다.');
+      } else {
+        throw new Error(result.message || '즐겨찾기 해제에 실패했습니다.');
+      }
+
+    } catch (error) {
+      console.error('즐겨찾기 해제 중 오류:', error);
+      alert('즐겨찾기 해제 중 오류가 발생했습니다: ' + error.message);
+
+      // 에러시 버튼 복구
+      button.disabled = false;
+      button.textContent = '해제';
+    }
+  }
+
+  // 즐겨찾기 개수 업데이트
+  function updateFavoriteCount() {
+    const remainingCards = document.querySelectorAll('.grid .card').length;
+    const countElement = document.querySelector('.stats strong');
+    if (countElement) {
+      countElement.textContent = remainingCards;
+    }
+  }
+
+  // 빈 상태 확인
+  function checkEmptyState() {
+    const grid = document.querySelector('.grid');
+    const remainingCards = document.querySelectorAll('.grid .card').length;
+
+    if (remainingCards === 0) {
+      grid.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-secondary);">즐겨찾기한 관광지가 없습니다.<br><a href="/attractions" style="color:var(--primary-color);">관광지 둘러보기</a></div>';
+    }
+  }
+
+  // 토스트 메시지 표시 (선택사항)
+  function showToast(message) {
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #10b981;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      z-index: 9999;
+      font-size: 14px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
+    `;
+    toast.textContent = message;
+
+    document.body.appendChild(toast);
+
+    // 애니메이션으로 나타내기
+    setTimeout(() => {
+      toast.style.transform = 'translateX(0)';
+    }, 100);
+
+    // 3초 후 제거
+    setTimeout(() => {
+      toast.style.transform = 'translateX(100%)';
+      setTimeout(() => {
+        if (toast.parentNode) {
+          toast.parentNode.removeChild(toast);
+        }
+      }, 300);
+    }, 3000);
+  }
+
+  // 폼 검증
+  document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('.submit-form');
+    if (form) {
+      // 좌표 입력 검증
+      document.getElementById('latitude').addEventListener('input', function(e) {
+        const value = e.target.value;
+        if (value && (isNaN(value) || value < -90 || value > 90)) {
+          e.target.setCustomValidity('올바른 위도를 입력해주세요 (-90 ~ 90)');
+        } else {
+          e.target.setCustomValidity('');
+        }
+      });
+
+      document.getElementById('longitude').addEventListener('input', function(e) {
+        const value = e.target.value;
+        if (value && (isNaN(value) || value < -180 || value > 180)) {
+          e.target.setCustomValidity('올바른 경도를 입력해주세요 (-180 ~ 180)');
+        } else {
+          e.target.setCustomValidity('');
+        }
+      });
+
+      // 폼 제출 전 검증
+      form.addEventListener('submit', function(e) {
+        const name = document.getElementById('name').value.trim();
+        const category = document.getElementById('category').value;
+        const description = document.getElementById('description').value.trim();
+
+        if (!name || !category || !description) {
+          e.preventDefault();
+          alert('필수 항목을 모두 입력해주세요.');
+          return false;
+        }
+
+        if (description.length < 10) {
+          e.preventDefault();
+          alert('설명은 10자 이상 입력해주세요.');
+          return false;
+        }
+
+        return true;
+      });
+    }
+  });
+</script>
 </body>
 </html>

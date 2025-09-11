@@ -46,7 +46,7 @@
       <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
       <div class="group">
         <label class="label" for="email">이메일</label>
-        <!-- ✅ FlashAttribute 키 맞추기: justRegisteredEmail -->
+        <!--  FlashAttribute 키 맞추기: justRegisteredEmail -->
         <input id="email" name="email" type="email" class="input" placeholder="example@email.com"
                th:value="${justRegisteredEmail}" required>
       </div>
