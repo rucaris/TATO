@@ -5,14 +5,22 @@ import com.tato.repository.AttractionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.dao.DataIntegrityViolationException;
-
 import java.util.List;
 import java.util.Optional;
-@Service @RequiredArgsConstructor
+
+@Service
+@RequiredArgsConstructor
 public class AttractionService {
+
   private final AttractionRepository repo;
-  public Optional<Attraction> findById(Long id){ return repo.findById(id); }
-  public List<Attraction> findAllAttractions() { return repo.findAll(); }
+
+  public Optional<Attraction> findById(Long id) {
+    return repo.findById(id);
+  }
+
+  public List<Attraction> findAllAttractions() {
+    return repo.findAll();
+  }
 
   public Attraction findAttractionById(Long id) {
     return repo.findById(id)

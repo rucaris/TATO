@@ -49,7 +49,7 @@ public class HomeController {
     return "attractions";
   }
 
-  @GetMapping("/api/attractions")
+  /* @GetMapping("/api/attractions")
   @ResponseBody
   public ResponseEntity<List<Attraction>> getAllAttractions() {
     try {
@@ -59,7 +59,7 @@ public class HomeController {
       log.error("관광지 데이터 조회 중 오류", e);
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
     }
-  }
+  } */
 
   @GetMapping("/api/attractions/metadata")
   @ResponseBody

@@ -11,6 +11,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class FavoriteService {
@@ -43,5 +45,12 @@ public class FavoriteService {
     String email = SecurityContextHolder.getContext().getAuthentication().getName();
     User user = userRepository.findByEmail(email).orElseThrow();
     return favoriteRepository.findByUserIdAndAttractionId(user.getId(), attractionId).isPresent();
+  }
+
+  @Transactional(readOnly = true)
+  public List<Favorite> getUserFavorites() {
+    String email = SecurityContextHolder.getContext().getAuthentication().getName();
+    User user = userRepository.findByEmail(email).orElseThrow();
+    return favoriteRepository.findAllByUserId(user.getId());
   }
 }
