@@ -381,9 +381,10 @@
       // 카테고리를 개별 태그로 표시
       let categoryTags = '';
       if (a.categories && a.categories.length > 0) {
-        categoryTags = a.categories.map((category, index) =>
-                `<span class="category-tag${index === 0 ? ' primary' : ''}">${escapeHtml(category)}</span>`
-        ).join(' ');
+        categoryTags = a.categories.map((category, index) => {
+                const isPrimary = activeCat ? category === activeCat : index === 0;
+                return `<span class="category-tag${isPrimary ? ' primary' : ''}">${escapeHtml(category)}</span>`
+        }).join(' ');
       } else {
         categoryTags = '<span class="category-tag">기타</span>';
       }

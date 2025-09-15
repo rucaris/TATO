@@ -351,14 +351,16 @@
   <div class="modal-content">
     <span class="close-button">&times;</span>
     <h2>관광지 등록 요청 상세</h2>
-    <p><strong>ID:</strong> <span id="modalRequestId"></span></p>
-    <p><strong>관광지명:</strong> <span id="modalAttractionName"></span></p>
-    <p><strong>카테고리:</strong> <span id="modalAttractionCategory"></span></p>
-    <p><strong>주소:</strong> <span id="modalAttractionAddress"></span></p>
-    <p><strong>설명:</strong> <span id="modalAttractionDescription"></span></p>
-    <p><strong>신청자 ID:</strong> <span id="modalApplicantEmail"></span></p>
-    <p><strong>신청일:</strong> <span id="modalRequestDate"></span></p>
-
+    <form>
+        <p><label>요청 ID:</label><input type="text" id="modalRequestId" class="input" readonly></p>
+        <p><label>신청자 ID:</label><input type="text" id="modalApplicantId" class="input" readonly></p>
+        <p><label>신청자 닉네임:</label><input type="text" id="modalApplicantNickname" class="input" readonly></p>
+        <p><label>관광지명:</label><input type="text" id="modalAttractionName" class="input" readonly></p>
+        <p><label>카테고리:</label><input type="text" id="modalAttractionCategory" class="input" readonly></p>
+        <p><label>주소:</label><input type="text" id="modalAttractionAddress" class="input" readonly></p>
+        <p><label>설명:</label><textarea id="modalAttractionDescription" class="input" rows="4" readonly></textarea></p>
+        <p><label>신청일:</label><input type="text" id="modalRequestDate" class="input" readonly></p>
+    </form>
     <div class="modal-buttons">
       <button class="btn primary" id="approveRequestBtn">승인</button>
       <button class="btn" id="rejectRequestBtn">거절</button>
@@ -411,13 +413,14 @@
     }
 
     function populateModal(request) {
-      document.getElementById('modalRequestId').textContent = request.id;
-      document.getElementById('modalAttractionName').textContent = request.name;
-      document.getElementById('modalAttractionCategory').textContent = request.category;
-      document.getElementById('modalAttractionAddress').textContent = request.address;
-      document.getElementById('modalAttractionDescription').textContent = request.description || '없음';
-      document.getElementById('modalApplicantEmail').textContent = request.userId;
-      document.getElementById('modalRequestDate').textContent = new Date(request.requestDate).toLocaleDateString('ko-KR');
+      document.getElementById('modalRequestId').value = request.id;
+      document.getElementById('modalAttractionName').value = request.name;
+      document.getElementById('modalAttractionCategory').value = request.category;
+      document.getElementById('modalAttractionAddress').value = request.address || '정보 없음';
+      document.getElementById('modalAttractionDescription').value = request.description || '없음';
+      document.getElementById('modalApplicantId').value = request.userId;
+      document.getElementById('modalApplicantNickname').value = request.applicantNickname || '알 수 없음';
+      document.getElementById('modalRequestDate').value = new Date(request.requestDate).toLocaleDateString('ko-KR');
       requestDetailModal.setAttribute('data-current-request-id', request.id);
     }
 
@@ -467,6 +470,16 @@
 
     function getCsrfToken() {
       const csrfToken = document.querySelector('meta[name="_csrf"]');
+      const csrfHeader = document.querySelector('meta[name="_csrf_header"]');
+      return {
+        token: csrfToken ? csrfToken.getAttribute('content') : null,
+        header: csrfHeader ? csrfHeader.getAttribute('content') : null
+      };
+    }
+  });
+</script>
+</body>
+</html>meta[name="_csrf"]');
       const csrfHeader = document.querySelector('meta[name="_csrf_header"]');
       return {
         token: csrfToken ? csrfToken.getAttribute('content') : null,

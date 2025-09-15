@@ -173,38 +173,49 @@ public class FavoriteController {
 
     @GetMapping("/api/favorites/status/{spotId}")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> checkFavoriteStatus(@PathVariable String spotId,
-                                                                   Principal principal) {
-        Map<String, Object> response = new HashMap<>();
+    public ResponseEntity<?> checkFavoriteStatus(@PathVariable String spotId,
+                                                 Principal principal) {
+        if (principal == null) {
+            if ("all".equals(spotId)) {
+                return ResponseEntity.ok(List.of());
+            }
+            Map<String, Object> response = new HashMap<>();
+            response.put("favorited", false);
+            response.put("success", true);
+            return ResponseEntity.ok(response);
+        }
 
         try {
-            if (principal == null) {
-                response.put("favorited", false);
+            User user = userService.findByEmail(principal.getName());
+
+            if ("all".equals(spotId)) {
+                // all 처리
+                List<Map<String, Long>> userFavorites = favoriteRepository.findAllByUserId(user.getId())
+                        .stream()
+                        .map(fav -> Map.of("attractionId", fav.getAttraction().getId()))
+                        .collect(Collectors.toList());
+                return ResponseEntity.ok(userFavorites);
+            } else {
+                // 단일 처리
+                Map<String, Object> response = new HashMap<>();
+                Long attractionId = Long.parseLong(spotId);
+                Attraction attraction = attractionRepository.findById(attractionId)
+                        .orElseThrow(() -> new RuntimeException("관광지를 찾을 수 없습니다: " + spotId));
+
+                boolean isFavorited = favoriteService.isFavorited(user, attraction);
+                response.put("favorited", isFavorited);
                 response.put("success", true);
                 return ResponseEntity.ok(response);
             }
-
-            User user = userService.findByEmail(principal.getName());
-
-            Long attractionId = Long.parseLong(spotId);
-            Attraction attraction = attractionRepository.findById(attractionId)
-                    .orElseThrow(() -> new RuntimeException("관광지를 찾을 수 없습니다: " + spotId));
-
-            boolean isFavorited = favoriteService.isFavorited(user, attraction);
-
-            response.put("favorited", isFavorited);
-            response.put("success", true);
-
-            return ResponseEntity.ok(response);
         } catch (NumberFormatException e) {
             log.error("잘못된 spotId 형식: {}", spotId, e);
-            response.put("favorited", false);
+            Map<String, Object> response = new HashMap<>();
             response.put("success", false);
             response.put("message", "올바르지 않은 관광지 ID입니다.");
             return ResponseEntity.badRequest().body(response);
         } catch (Exception e) {
             log.error("찜하기 상태 확인 중 오류", e);
-            response.put("favorited", false);
+            Map<String, Object> response = new HashMap<>();
             response.put("success", false);
             response.put("message", "상태 확인에 실패했습니다.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
@@ -254,6 +265,50 @@ public class FavoriteController {
             return ResponseEntity.badRequest().body(response);
         } catch (Exception e) {
             log.error("찜하기 토글 중 오류", e);
+            response.put("success", false);
+            response.put("message", "찜하기 처리에 실패했습니다.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @PostMapping("/api/favorites/toggle")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> toggleFavoriteApi(@RequestBody Map<String, Long> payload, Principal principal) {
+        Map<String, Object> response = new HashMap<>();
+        Long attractionId = payload.get("attractionId");
+
+        if (principal == null) {
+            response.put("success", false);
+            response.put("message", "로그인이 필요합니다.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+
+        if (attractionId == null) {
+            response.put("success", false);
+            response.put("message", "관광지 ID가 필요합니다.");
+            return ResponseEntity.badRequest().body(response);
+        }
+
+        try {
+            User user = userService.findByEmail(principal.getName());
+            Attraction attraction = attractionRepository.findById(attractionId)
+                    .orElseThrow(() -> new RuntimeException("관광지를 찾을 수 없습니다: " + attractionId));
+
+            boolean wasFavorited = favoriteService.isFavorited(user, attraction);
+
+            if (wasFavorited) {
+                favoriteService.removeFavorite(user, attraction);
+                response.put("favorited", false);
+            } else {
+                favoriteService.addFavorite(user, attraction);
+                response.put("favorited", true);
+            }
+
+            response.put("success", true);
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("찜하기 API 처리 중 오류", e);
             response.put("success", false);
             response.put("message", "찜하기 처리에 실패했습니다.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
