@@ -1,8 +1,10 @@
 package com.tato.controller;
 
+import com.tato.model.User;
 import com.tato.repository.UserRepository;
 import com.tato.repository.AttractionRepository;
 import com.tato.service.AttractionService;
+import com.tato.service.FavoriteService;
 import com.tato.service.ReviewService;
 import com.tato.service.UserService;
 import com.tato.model.Attraction;
@@ -17,7 +19,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.security.Principal;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Controller
@@ -29,6 +34,7 @@ public class AttractionController {
     private final UserRepository userRepository;
     private final AttractionRepository attractionRepository;
     private final UserService userService;
+    private final FavoriteService favoriteService;
 
     // 관광지 상세 페이지
     @GetMapping("/attractions/{spotId}")
@@ -71,14 +77,44 @@ public class AttractionController {
         }
     }
 
-    // API 엔드포인트 - 모든 관광지 조회 (index.html에서 사용)
     @GetMapping("/api/attractions")
     @ResponseBody
-    public ResponseEntity<List<Attraction>> getAllAttractions() {
+    public ResponseEntity<List<Map<String, Object>>> getAllAttractions(Principal principal) {
         try {
             List<Attraction> attractions = attractionRepository.findAll();
-            log.debug("API 요청으로 {} 개의 관광지 데이터 반환", attractions.size());
-            return ResponseEntity.ok(attractions);
+
+            User currentUser = null;
+            if (principal != null) {
+                currentUser = userService.findByEmail(principal.getName());
+            }
+
+            List<Map<String, Object>> result = new ArrayList<>();
+
+            for (Attraction attraction : attractions) {
+                Map<String, Object> attractionData = new HashMap<>();
+                attractionData.put("id", attraction.getId());
+                attractionData.put("name", attraction.getName());
+                attractionData.put("category", attraction.getCategory());
+                attractionData.put("address", attraction.getAddress());
+                attractionData.put("latitude", attraction.getLatitude());
+                attractionData.put("longitude", attraction.getLongitude());
+                attractionData.put("description", attraction.getDescription());
+
+                // 찜하기 상태 추가
+                boolean isFavorited = false;
+                if (currentUser != null) {
+                    isFavorited = favoriteService.isFavorited(currentUser, attraction);
+                }
+                attractionData.put("isFavorited", isFavorited);
+
+                // 평균 평점 추가
+                double avgRating = reviewService.getAverageRating(attraction.getId());
+                attractionData.put("averageRating", avgRating);
+
+                result.add(attractionData);
+            }
+
+            return ResponseEntity.ok(result);
         } catch (Exception e) {
             log.error("관광지 데이터 조회 중 오류", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();

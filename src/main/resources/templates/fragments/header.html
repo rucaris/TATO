@@ -16,10 +16,10 @@
     </span>
 
     <span sec:authorize="isAuthenticated()">
-      <a th:href="@{/favorites}" class="btn">즐겨찾기</a>
+      <a th:href="@{/favorites}" class="btn">찜 목록</a>
       <!-- 관광지 신청 링크 추가 -->
       <a th:href="@{/favorites#submit}" class="btn" style="background: #10b981; color: white;">
-        ✨ 관광지 신청
+        관광지 신청
       </a>
       <form th:action="@{/logout}" method="post" style="display:inline">
         <input type="hidden" th:if="${_csrf != null}"

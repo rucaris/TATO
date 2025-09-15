@@ -32,7 +32,7 @@ public class FavoriteController {
     private final FavoriteService favoriteService;
     private final UserService userService;
     private final FavoriteRepository favoriteRepository;
-    private final ImageService imageService; // 추가
+    private final ImageService imageService;
     private final AttractionProposalService attractionProposalService;
     private final AttractionRepository attractionRepository;
 
@@ -186,7 +186,6 @@ public class FavoriteController {
 
             User user = userService.findByEmail(principal.getName());
 
-            // spotId를 Long으로 변환해서 관광지 찾기
             Long attractionId = Long.parseLong(spotId);
             Attraction attraction = attractionRepository.findById(attractionId)
                     .orElseThrow(() -> new RuntimeException("관광지를 찾을 수 없습니다: " + spotId));
@@ -212,9 +211,6 @@ public class FavoriteController {
         }
     }
 
-    /**
-     * 찜하기 토글 API 개선 (상세페이지용)
-     */
     @PostMapping("/favorites/{spotId}")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> toggleFavoriteDetail(@PathVariable String spotId,
@@ -238,15 +234,13 @@ public class FavoriteController {
             boolean wasAlreadyFavorited = favoriteService.isFavorited(user, attraction);
 
             if (wasAlreadyFavorited) {
-                // 찜하기 해제
                 favoriteService.removeFavorite(user, attraction);
                 response.put("favorited", false);
-                response.put("message", "찜하기가 해제되었습니다!");
+                response.put("message", "찜 목록에서 해제되었습니다");
             } else {
-                // 찜하기 추가
                 favoriteService.addFavorite(user, attraction);
                 response.put("favorited", true);
-                response.put("message", "찜하기에 추가되었습니다!");
+                response.put("message", "찜 목록에 추가되었습니다");
             }
 
             response.put("success", true);
@@ -266,7 +260,7 @@ public class FavoriteController {
         }
     }
 
-    // 즐겨찾기 토글 API
+    /* 코드 충돌로 잠시 주석처리
     @PostMapping("/favorites/{attractionId}")
     @ResponseBody
     public Map<String, Object> toggleFavorite(@PathVariable Long attractionId, Principal principal) {
@@ -295,5 +289,5 @@ public class FavoriteController {
         }
 
         return response;
-    }
+    } */
 }
