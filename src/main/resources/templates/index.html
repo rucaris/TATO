@@ -217,11 +217,44 @@
               filtered = [...all];
               renderMarkers();
               renderList();
+
+              setTimeout(() => {
+                checkAllFavoriteStatus();
+              }, 500);
             })
             .catch(error => {
               console.error('관광지 데이터 로딩 에러:', error);
               showErrorMessage('관광지 데이터를 불러오지 못했습니다. 서버를 확인하세요.');
             });
+  }
+
+  async function checkFavoriteStatus(button, attractionId = null) {
+    if (!attractionId) {
+      attractionId = button.getAttribute('data-attraction-id') ||
+              button.getAttribute('onclick')?.match(/fav\('(.+?)'\)/)?.[1];
+    }
+
+    try {
+      const response = await fetch(`/api/favorites/status/${attractionId}`);
+      if (response.ok) {
+        const result = await response.json();
+        if (result.favorited) {
+          button.textContent = '찜 해제';  // 통일된 텍스트
+          button.classList.add('favorited');
+          if (button.style) {
+            button.style.background = '#ef4444';  // 지도 팝업 버튼용
+          }
+        } else {
+          button.textContent = '찜하기';  // 통일된 텍스트
+          button.classList.remove('favorited');
+          if (button.style) {
+            button.style.background = '#10b981';  // 지도 팝업 버튼용
+          }
+        }
+      }
+    } catch (error) {
+      console.log('찜하기 상태 확인 중 오류:', error);
+    }
   }
 
   function showErrorMessage(message) {
@@ -288,27 +321,55 @@
   }
 
   // 마커/팝업
-  function renderMarkers(){
+  async function renderMarkers(){
     cluster.clearLayers();
-    filtered.forEach(a=>{
+
+    for (const a of filtered) {
       const m = L.marker([a.lat, a.lng]);
+
+      const favoriteStatus = await getFavoriteStatus(a.id);
+      const buttonText = favoriteStatus ? '찜 해제' : '찜하기';
+      const buttonStyle = favoriteStatus ? '#ef4444' : '#10b981';
+
       const html = `
-      <div style="min-width:220px">
-        <div style="font-weight:700;margin-bottom:6px">${escapeHtml(a.name)}</div>
-        ${a.category?`<div class="meta"><b>카테고리</b> ${escapeHtml(a.category)}</div>`:''}
-        ${a.address?`<div class="meta"><b>주소</b> ${escapeHtml(a.address)}</div>`:''}
-        ${a.description?`<div class="meta" style="margin-top:6px">${escapeHtml(a.description)}</div>`:''}
-        <div style="margin-top:10px;display:flex;gap:8px">
-          <a class="btn primary" href="/attractions/${encodeURIComponent(a.id)}">상세보기</a>
-          <button class="btn" onclick="fav('${a.id}')">찜하기</button>
-        </div>
-      </div>`;
+    <div style="min-width:220px">
+      <div style="font-weight:700;margin-bottom:6px">${escapeHtml(a.name)}</div>
+      ${a.category?`<div class="meta"><b>카테고리</b> ${escapeHtml(a.category)}</div>`:''}
+      ${a.address?`<div class="meta"><b>주소</b> ${escapeHtml(a.address)}</div>`:''}
+      ${a.description?`<div class="meta" style="margin-top:6px">${escapeHtml(a.description)}</div>`:''}
+      <div style="margin-top:10px;display:flex;gap:8px">
+        <a class="btn primary" href="/attractions/${encodeURIComponent(a.id)}">상세보기</a>
+        <button class="btn" onclick="fav('${a.id}')" style="background: ${buttonStyle}; color: white;">${buttonText}</button>
+      </div>
+    </div>`;
       m.bindPopup(html);
       cluster.addLayer(m);
-    });
+    }
   }
 
-  // 목록 렌더링 (개선된 카테고리 태그 표시)
+  const favoriteCache = new Map();
+
+  async function getFavoriteStatus(attractionId) {
+    if (favoriteCache.has(attractionId)) {
+      return favoriteCache.get(attractionId);
+    }
+
+    try {
+      const response = await fetch(`/api/favorites/status/${attractionId}`);
+      if (response.ok) {
+        const result = await response.json();
+        const isFavorited = result.favorited || false;
+        favoriteCache.set(attractionId, isFavorited);
+        return isFavorited;
+      }
+    } catch (error) {
+      console.log('찜 상태 확인 중 오류:', error);
+    }
+
+    return false;
+  }
+
+  // 목록 렌더링
   function renderList(){
     const box = document.getElementById('listBox');
     if(!filtered.length){
@@ -350,12 +411,11 @@
 
   // 즐겨찾기 액션
   async function fav(id){
-    console.log('즐겨찾기 요청:', id);
+    console.log('찜하기 요청:', id);
 
-    //  로그인 체크 개선 - Thymeleaf 렌더링된 요소 확인
     const isLoggedIn = document.querySelector('span[sec\\:authorize="isAuthenticated()"]') ||
             document.querySelector('span.user') ||
-            document.querySelector('input[name="_csrf"]'); // CSRF 토큰 존재 확인
+            document.querySelector('input[name="_csrf"]');
 
     if (!isLoggedIn) {
       alert('로그인이 필요합니다.');
@@ -388,39 +448,35 @@
       }
 
       const result = await response.json();
-      console.log('즐겨찾기 응답:', result); // 디버깅용
+      console.log('찜하기 응답:', result);
 
       if (result.success) {
-        // 성공 메시지와 함께 상태 표시
-        const message = result.favorited ?
-                '찜하기 완료' :
-                '찜하기 제거';
-
+        const message = result.favorited ? '찜하기 완료' : '찜하기 제거';
         alert(message);
 
-        // 선택적: 버튼 텍스트나 스타일 업데이트
+        favoriteCache.set(id, result.favorited);
+
         updateFavoriteButtons(id, result.favorited);
 
       } else {
         alert(result.message || '오류가 발생했습니다.');
       }
     } catch (error) {
-      console.error('즐겨찾기 처리 중 오류:', error);
+      console.error('찜하기 처리 중 오류:', error);
       alert('네트워크 오류가 발생했습니다: ' + error.message);
     }
   }
 
   function updateFavoriteButtons(attractionId, isFavorited) {
-    // 지도 팝업의 즐겨찾기 버튼 찾기
     const popupButtons = document.querySelectorAll(`button[onclick="fav('${attractionId}')"]`);
 
     popupButtons.forEach(button => {
       if (isFavorited) {
         button.style.background = '#ef4444';
-        button.textContent = '찜 목록 제거';
+        button.textContent = '찜 해제';
       } else {
         button.style.background = '#10b981';
-        button.textContent = '찜 목록 추가';
+        button.textContent = '찜하기';
       }
     });
 
@@ -428,7 +484,7 @@
     listButtons.forEach(button => {
       if (isFavorited) {
         button.classList.add('favorited');
-        button.textContent = '찜 목록에 이미 추가 되어있습니다.';
+        button.textContent = '찜 해제';
       } else {
         button.classList.remove('favorited');
         button.textContent = '찜하기';

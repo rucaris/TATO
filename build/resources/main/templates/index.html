@@ -1,129 +1,77 @@
-<!doctype html>
-<html lang="ko"
-      xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<!DOCTYPE html>
+<html lang="ko">
 <head>
   <meta charset="utf-8" />
-  <title>TATO - 도쿄 관광지 한눈에</title>
+  <title>TATO - 도쿄 관광지 탐색</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="_csrf" th:content="${_csrf.token}"/>
-  <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
   <link th:href="@{/css/base.css}" rel="stylesheet">
 
-  <!-- Leaflet CSS/JS -->
+  <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-  <!-- MarkerCluster -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
-  <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
 
   <style>
-    :root{
-      --primary:#2563eb; --primary-hover:#1d4ed8;
-      --bg:#f8fafc; --text:#1e293b; --muted:#64748b; --border:#e2e8f0;
-      --shadow:0 1px 3px 0 rgb(0 0 0 / .1);
-    }
-    *{margin:0;padding:0;box-sizing:border-box}
-    html,body{height:100%;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text)}
-
-    /* Header */
-    .header{height:64px;background:#fff;border-bottom:1px solid var(--border);
-      display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:1000;box-shadow:var(--shadow)}
-    .logo{font-size:24px;font-weight:800;color:var(--primary-color);text-decoration:none}
-    .header-nav{display:flex;gap:10px;align-items:center}
-    .btn{padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:#fff;color:var(--text);text-decoration:none;font-size:14px}
-    .btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
-    .btn:hover{filter:brightness(0.98)}
-    .user{font-size:14px;color:var(--muted)}
-
-    /* Layout */
-    .main{display:grid;grid-template-columns:380px 1fr;height:calc(100vh - 64px)}
-    @media (max-width:900px){.main{grid-template-columns:1fr;grid-template-rows:320px 1fr}}
-
-    /* Sidebar */
-    .side{background:#fff;border-right:1px solid var(--border);overflow:auto}
-    .side-sec{padding:20px 24px;border-bottom:1px solid var(--border)}
-    .title{font-size:18px;font-weight:700;margin-bottom:6px}
-    .subtitle{color:var(--muted);font-size:13px}
-    .search{display:flex;gap:8px;margin-top:12px}
-    .input{flex:1;padding:10px 12px;border:1px solid var(--border);border-radius:8px}
-    .input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgb(37 99 235 / .12)}
-    .pill-wrap{display:flex;flex-wrap:wrap;gap:8px}
-    .pill{padding:6px 10px;border:1px solid var(--border);border-radius:999px;font-size:12px;background:#fff;cursor:pointer}
-    .pill.active{background:var(--primary);border-color:var(--primary);color:#fff}
-
-    .list{padding:18px 24px}
-    .hint{font-size:12px;color:var(--muted);margin-bottom:10px}
-    .card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:10px;cursor:pointer;transition:.15s;box-shadow:var(--shadow)}
-    .card:hover{transform:translateY(-1px);border-color:var(--primary)}
-    .name{font-weight:700;margin-bottom:4px}
-    .meta{font-size:12px;color:var(--muted)}
-    .badge{display:inline-block;margin-top:6px;background:#eff6ff;color:var(--primary);border-radius:999px;padding:2px 8px;font-size:11px}
-
-    /* 카테고리 태그 스타일 추가 */
-    .categories-container {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-top: 8px;
-    }
-
-    .category-tag {
-      background: #eff6ff;
-      color: #2563eb;
-      padding: 4px 10px;
-      border-radius: 12px;
+    /* 🔥 추가된 스타일 */
+    .map-range-filter {
+      position: absolute;
+      top: 60px;
+      right: 14px;
+      z-index: 1000;
+      background: white;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
       font-size: 12px;
-      border: 1px solid #e0f2fe;
+    }
+
+    .map-range-filter label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
       font-weight: 500;
-      display: inline-block;
     }
 
-    .category-tag.primary {
-      background: #2563eb;
-      color: #fff;
-      border-color: #2563eb;
-      font-weight: 600;
+    .popular-marker {
+      background-color: #ff6b6b !important;
+      border: 3px solid #ff4757 !important;
+      box-shadow: 0 0 10px rgba(255, 107, 107, 0.5) !important;
     }
 
-    /* Map */
-    .map-wrap{position:relative}
-    #map{width:100%;height:100%}
-    .map-tools{position:absolute;top:14px;right:14px;display:flex;flex-direction:column;gap:8px;z-index:1000}
-    .tool{background:#fff;border:1px solid var(--border);border-radius:8px;padding:8px}
+    .popular-marker .marker-icon {
+      color: white;
+      font-weight: bold;
+    }
+
+    /* 리뷰 개수 표시 스타일 */
+    .review-badge {
+      background: #ff6b6b;
+      color: white;
+      padding: 2px 6px;
+      border-radius: 10px;
+      font-size: 10px;
+      font-weight: bold;
+      margin-left: 4px;
+    }
+
+    .popular-badge {
+      background: linear-gradient(45deg, #ff6b6b, #ffa726);
+      color: white;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: bold;
+      margin-left: 6px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
   </style>
 </head>
 <body>
-<header class="header">
-  <a th:href="@{/}" class="logo">TATO</a>
-  <nav class="header-nav">
-    <a th:href="@{/}" class="btn">홈</a>
-    <a th:href="@{/attractions}" class="btn">목록</a>
-
-    <!-- 로그인 전 사이트 모습 -->
-    <span sec:authorize="isAnonymous()">
-      <a th:href="@{/login}" class="btn primary">로그인</a>
-      <a th:href="@{/register}" class="btn">회원가입</a>
-    </span>
-
-    <!-- 로그인 후 사이트 -->
-    <span sec:authorize="isAuthenticated()">
-      <a th:href="@{/favorites}" class="btn">즐겨찾기</a>
-      <span sec:authorize="hasRole('ROLE_ADMIN')">
-        <a th:href="@{/admin}" class="btn">관리자</a>
-      </span>
-      <span class="user" th:text="${username}">사용자</span>
-      <form th:action="@{/logout}" method="post" style="display:inline;">
-        <button type="submit" class="btn primary">로그아웃</button>
-      </form>
-    </span>
-  </nav>
-</header>
+<div th:replace="fragments/header :: header"></div>
 
 <main class="main">
-  <!-- Sidebar -->
   <aside class="side">
     <section class="side-sec">
       <div class="title">도쿄 관광지 탐색</div>
@@ -151,12 +99,26 @@
     <div class="map-tools">
       <button class="tool" title="전체보기" onclick="resetView()">🌍</button>
     </div>
+
+    <!-- 🔥 새로 추가: 지도 범위 필터 -->
+    <div class="map-range-filter">
+      <label>
+        <input type="checkbox" id="mapRangeFilter" onchange="toggleMapRangeFilter()">
+        현재 지도 범위에서만 검색
+      </label>
+    </div>
   </section>
 </main>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
 
 <script>
   // 전역 상태
   let map, cluster, all = [], filtered = [], activeCat = null;
+  let mapRangeFilterActive = false; // 🔥 지도 범위 필터 상태
+  let popularThreshold = 3; // 🔥 인기 관광지 기준 (리뷰 3개 이상)
 
   // 초기화
   initMap();
@@ -173,8 +135,48 @@
     }).addTo(map);
     cluster = L.markerClusterGroup({maxClusterRadius:50, chunkedLoading:true});
     map.addLayer(cluster);
+
+    // 🔥 지도 이동 이벤트 리스너 추가
+    map.on('moveend', function() {
+      if (mapRangeFilterActive) {
+        applyFilters();
+      }
+    });
   }
-  function resetView(){ map.setView([35.681236,139.767125], 11); }
+
+  function resetView(){
+    map.setView([35.681236,139.767125], 11);
+  }
+
+  // 🔥 지도 범위 필터 토글
+  function toggleMapRangeFilter() {
+    const checkbox = document.getElementById('mapRangeFilter');
+    mapRangeFilterActive = checkbox.checked;
+    applyFilters();
+
+    if (mapRangeFilterActive) {
+      console.log('지도 범위 필터 활성화: 현재 지도 범위에서만 검색합니다.');
+    } else {
+      console.log('지도 범위 필터 비활성화: 전체 관광지를 표시합니다.');
+    }
+  }
+
+  // 🔥 지도 범위 내 관광지 필터링
+  function filterByMapBounds(attractions) {
+    if (!mapRangeFilterActive) {
+      return attractions;
+    }
+
+    const bounds = map.getBounds();
+    return attractions.filter(a => {
+      return bounds.contains([a.lat, a.lng]);
+    });
+  }
+
+  // 🔥 인기 관광지 판별 함수
+  function isPopularAttraction(attraction) {
+    return attraction.reviewCount >= popularThreshold;
+  }
 
   function loadAttractionsFromApi(){
     console.log('API에서 관광지 데이터 로딩 시작...');
@@ -194,7 +196,7 @@
                 return;
               }
 
-              // 데이터 변환 및 카테고리 분할 처리
+              // 🔥 리뷰 개수 정보 포함하여 데이터 변환
               all = data.map(a => ({
                 id: a.id,
                 name: a.name || '',
@@ -203,10 +205,15 @@
                 address: a.address || '',
                 lat: a.latitude,
                 lng: a.longitude,
-                description: a.description || ''
+                description: a.description || '',
+                reviewCount: a.reviewCount || 0, // 🔥 리뷰 개수 추가
+                averageRating: a.averageRating || 0,
+                isFavorited: a.isFavorited || false
               })).filter(a => !Number.isNaN(a.lat) && !Number.isNaN(a.lng));
 
               console.log('처리된 관광지 데이터:', all.length, '개');
+              console.log('인기 관광지 (' + popularThreshold + '개 이상 리뷰):',
+                      all.filter(a => isPopularAttraction(a)).length, '개');
 
               if (all.length === 0) {
                 showErrorMessage('유효한 관광지 데이터가 없습니다.');
@@ -231,7 +238,6 @@
 
   // 카테고리 필터 (개선된 버전)
   function initCategoryPills(){
-    // 모든 개별 카테고리 수집
     const allCats = new Set();
     all.forEach(a => {
       if (a.categories && a.categories.length > 0) {
@@ -268,15 +274,20 @@
     applyFilters();
   }
 
-  // 필터/검색 적용 (개선된 카테고리 매칭)
+  // 🔥 필터 적용 (지도 범위 필터 포함)
   function applyFilters(){
     const term = document.getElementById('q').value.trim().toLowerCase();
-    filtered = all.filter(a=>{
-      // 카테고리 매칭 개선 (개별 카테고리와 매칭)
+
+    // 기본 텍스트 및 카테고리 필터
+    let tempFiltered = all.filter(a=>{
       const okCat = !activeCat || (a.categories && a.categories.includes(activeCat));
       const okTerm = !term || [a.name, a.address, ...a.categories].some(v => (v||'').toLowerCase().includes(term));
       return okCat && okTerm;
     });
+
+    // 🔥 지도 범위 필터 적용
+    filtered = filterByMapBounds(tempFiltered);
+
     renderMarkers();
     renderList();
 
@@ -285,38 +296,85 @@
       const f = filtered[0];
       map.setView([f.lat, f.lng], 14);
     }
+
+    console.log(`필터 결과: ${filtered.length}/${all.length} 관광지 표시`);
   }
 
-  // 마커/팝업
-  function renderMarkers(){
+  // 🔥 마커 렌더링 (인기 관광지 하이라이트 포함)
+  async function renderMarkers(){
     cluster.clearLayers();
-    filtered.forEach(a=>{
-      const m = L.marker([a.lat, a.lng]);
+
+    for (const a of filtered) {
+      const isPopular = isPopularAttraction(a);
+
+      // 🔥 인기 관광지는 다른 아이콘 사용
+      let marker;
+      if (isPopular) {
+        marker = L.marker([a.lat, a.lng], {
+          icon: L.divIcon({
+            html: `<div style="background:#ff6b6b; border:3px solid #ff4757; width:25px; height:25px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-weight:bold; box-shadow:0 0 10px rgba(255,107,107,0.5);">🔥</div>`,
+            className: 'popular-marker',
+            iconSize: [31, 31],
+            iconAnchor: [15, 15]
+          })
+        });
+      } else {
+        marker = L.marker([a.lat, a.lng]);
+      }
+
+      // 🔥 팝업에 리뷰 개수 및 인기 배지 포함
+      const popularBadge = isPopular ? '<span class="popular-badge">인기</span>' : '';
+      const reviewBadge = a.reviewCount > 0 ? `<span class="review-badge">리뷰 ${a.reviewCount}개</span>` : '';
+
       const html = `
       <div style="min-width:220px">
-        <div style="font-weight:700;margin-bottom:6px">${escapeHtml(a.name)}</div>
+        <div style="font-weight:700;margin-bottom:6px">
+          ${escapeHtml(a.name)}${popularBadge}
+        </div>
         ${a.category?`<div class="meta"><b>카테고리</b> ${escapeHtml(a.category)}</div>`:''}
         ${a.address?`<div class="meta"><b>주소</b> ${escapeHtml(a.address)}</div>`:''}
         ${a.description?`<div class="meta" style="margin-top:6px">${escapeHtml(a.description)}</div>`:''}
+        <div style="margin-top:8px; display:flex; align-items:center; gap:8px;">
+          ${reviewBadge}
+          ${a.averageRating > 0 ? `<span style="color:#fbbf24;">★ ${a.averageRating.toFixed(1)}</span>` : ''}
+        </div>
         <div style="margin-top:10px;display:flex;gap:8px">
           <a class="btn primary" href="/attractions/${encodeURIComponent(a.id)}">상세보기</a>
-          <button class="btn" onclick="fav('${a.id}')">즐겨찾기</button>
+          <button class="btn" onclick="fav('${a.id}')" style="background: ${a.isFavorited ? '#ef4444' : '#10b981'}; color: white;">
+            ${a.isFavorited ? '찜 해제' : '찜하기'}
+          </button>
         </div>
       </div>`;
-      m.bindPopup(html);
-      cluster.addLayer(m);
-    });
+
+      marker.bindPopup(html);
+      cluster.addLayer(marker);
+    }
   }
 
-  // 목록 렌더링 (개선된 카테고리 태그 표시)
+  // 🔥 목록 렌더링 (인기 관광지 표시 포함)
   function renderList(){
     const box = document.getElementById('listBox');
     if(!filtered.length){
-      box.innerHTML = '<div class="meta" style="text-align:center; padding:20px;">검색 조건에 맞는 관광지가 없습니다</div>';
+      const rangeMsg = mapRangeFilterActive ? ' (현재 지도 범위 내)' : '';
+      box.innerHTML = `<div class="meta" style="text-align:center; padding:20px;">검색 조건에 맞는 관광지가 없습니다${rangeMsg}</div>`;
       return;
     }
 
-    box.innerHTML = filtered.map(a => {
+    // 🔥 인기 관광지를 상단에 정렬
+    const sortedFiltered = [...filtered].sort((a, b) => {
+      const aPopular = isPopularAttraction(a);
+      const bPopular = isPopularAttraction(b);
+
+      if (aPopular && !bPopular) return -1;
+      if (!aPopular && bPopular) return 1;
+      return b.reviewCount - a.reviewCount; // 리뷰 개수로 정렬
+    });
+
+    box.innerHTML = sortedFiltered.map(a => {
+      const isPopular = isPopularAttraction(a);
+      const popularBadge = isPopular ? '<span class="popular-badge">인기</span>' : '';
+      const reviewInfo = a.reviewCount > 0 ? `<span class="review-badge">리뷰 ${a.reviewCount}개</span>` : '';
+
       // 카테고리를 개별 태그로 표시
       let categoryTags = '';
       if (a.categories && a.categories.length > 0) {
@@ -328,11 +386,17 @@
       }
 
       return `
-        <article class="card" onclick="goto('${a.id}')">
-          <div class="name">${escapeHtml(a.name)}</div>
+        <article class="card" onclick="goto('${a.id}')" style="${isPopular ? 'border-left: 4px solid #ff6b6b;' : ''}">
+          <div class="name">
+            ${escapeHtml(a.name)}${popularBadge}
+          </div>
           <div class="meta">${escapeHtml(a.address || '')}</div>
           <div class="categories-container">
             ${categoryTags}
+          </div>
+          <div style="margin-top:8px; display:flex; align-items:center; gap:8px;">
+            ${reviewInfo}
+            ${a.averageRating > 0 ? `<span style="color:#fbbf24; font-size:12px;">★ ${a.averageRating.toFixed(1)}</span>` : ''}
           </div>
         </article>
       `;
@@ -348,14 +412,13 @@
     };
   }
 
-  // 즐겨찾기 액션
+  // 찜하기 액션
   async function fav(id){
-    console.log('즐겨찾기 요청:', id);
+    console.log('찜하기 요청:', id);
 
-    //  로그인 체크 개선 - Thymeleaf 렌더링된 요소 확인
     const isLoggedIn = document.querySelector('span[sec\\:authorize="isAuthenticated()"]') ||
             document.querySelector('span.user') ||
-            document.querySelector('input[name="_csrf"]'); // CSRF 토큰 존재 확인
+            document.querySelector('input[name="_csrf"]');
 
     if (!isLoggedIn) {
       alert('로그인이 필요합니다.');
@@ -388,52 +451,28 @@
       }
 
       const result = await response.json();
-      console.log('즐겨찾기 응답:', result); // 디버깅용
 
       if (result.success) {
-        // 성공 메시지와 함께 상태 표시
-        const message = result.favorited ?
-                '즐겨찾기 완료' :
-                '즐겨찾기 제거';
-
+        const message = result.favorited ? '찜하기 완료' : '찜하기 제거';
         alert(message);
 
-        // 선택적: 버튼 텍스트나 스타일 업데이트
-        updateFavoriteButtons(id, result.favorited);
+        // 🔥 찜 상태 업데이트
+        const attraction = all.find(a => a.id.toString() === id.toString());
+        if (attraction) {
+          attraction.isFavorited = result.favorited;
+        }
+
+        // 화면 업데이트
+        renderMarkers();
+        renderList();
 
       } else {
         alert(result.message || '오류가 발생했습니다.');
       }
     } catch (error) {
-      console.error('즐겨찾기 처리 중 오류:', error);
+      console.error('찜하기 처리 중 오류:', error);
       alert('네트워크 오류가 발생했습니다: ' + error.message);
     }
-  }
-
-  function updateFavoriteButtons(attractionId, isFavorited) {
-    // 지도 팝업의 즐겨찾기 버튼 찾기
-    const popupButtons = document.querySelectorAll(`button[onclick="fav('${attractionId}')"]`);
-
-    popupButtons.forEach(button => {
-      if (isFavorited) {
-        button.style.background = '#ef4444';
-        button.textContent = '즐겨찾기 제거';
-      } else {
-        button.style.background = '#10b981';
-        button.textContent = '즐겨찾기 추가';
-      }
-    });
-
-    const listButtons = document.querySelectorAll(`button[data-attraction-id="${attractionId}"]`);
-    listButtons.forEach(button => {
-      if (isFavorited) {
-        button.classList.add('favorited');
-        button.textContent = '즐겨찾기 되어있습니다.';
-      } else {
-        button.classList.remove('favorited');
-        button.textContent = '즐겨찾기';
-      }
-    });
   }
 
   function goto(id){

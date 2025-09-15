@@ -126,7 +126,7 @@
         <button class="favorite-btn"
                 th:attr="data-attraction-id=${attraction.id}"
                 onclick="toggleFavorite(this)">
-          ♡ 찜하기
+          찜하기
         </button>
       </div>
     </div>
@@ -270,7 +270,15 @@
 
       <div class="card">
         <h3>정보</h3>
+        <br>
         <p><strong>카테고리:</strong> <span th:text="*{category}">-</span></p>
+        <div th:if="*{operatingHours} != null and *{operatingHours} != ''" style="margin-top: 12px;">
+          <p><strong>이용시간:</strong> <span th:text="*{operatingHours}">-</span></p>
+        </div>
+        <div th:if="*{closedDays} != null and *{closedDays} != ''" style="margin-top: 8px;">
+          <p><strong>휴무일자:</strong> <span th:text="*{closedDays}">-</span></p>
+        </div>
+      </div>
       </div>
     </div>
   </div>

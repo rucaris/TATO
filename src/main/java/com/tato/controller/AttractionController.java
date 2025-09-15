@@ -111,6 +111,9 @@ public class AttractionController {
                 double avgRating = reviewService.getAverageRating(attraction.getId());
                 attractionData.put("averageRating", avgRating);
 
+                long reviewCount = reviewService.getReviewCount(attraction.getId());
+                attractionData.put("reviewCount", reviewCount);
+
                 result.add(attractionData);
             }
 

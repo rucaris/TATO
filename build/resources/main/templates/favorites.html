@@ -271,7 +271,6 @@
           <!-- 즐겨찾기 해제 버튼 - 카드 클릭 이벤트와 분리 -->
           <div class="favorite-actions" style="padding: 0 14px 14px;">
             <span style="font-size: 12px; color: var(--text-secondary);">
-              즐겨찾기
             </span>
             <button type="button"
                     class="btn-unfavorite"
@@ -396,7 +395,7 @@
 
     const attractionId = button.getAttribute('data-attraction-id');
 
-    if (!confirm('정말로 즐겨찾기를 해제하시겠습니까?')) {
+    if (!confirm('정말로 찜하기를 해제하시겠습니까?')) {
       return;
     }
 
@@ -442,14 +441,14 @@
         }, 300);
 
         // 성공 메시지
-        showToast('즐겨찾기가 해제되었습니다.');
+        showToast('찜하기가 해제되었습니다.');
       } else {
-        throw new Error(result.message || '즐겨찾기 해제에 실패했습니다.');
+        throw new Error(result.message || '찜 하기 해제에 실패했습니다.');
       }
 
     } catch (error) {
-      console.error('즐겨찾기 해제 중 오류:', error);
-      alert('즐겨찾기 해제 중 오류가 발생했습니다: ' + error.message);
+      console.error('찜 하기 해제 중 오류:', error);
+      alert('찜 하기 해제 중 오류가 발생했습니다: ' + error.message);
 
       // 에러시 버튼 복구
       button.disabled = false;
@@ -472,7 +471,7 @@
     const remainingCards = document.querySelectorAll('.grid .card').length;
 
     if (remainingCards === 0) {
-      grid.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-secondary);">즐겨찾기한 관광지가 없습니다.<br><a href="/attractions" style="color:var(--primary-color);">관광지 둘러보기</a></div>';
+      grid.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-secondary);">찜 한 관광지가 없습니다.<br><a href="/attractions" style="color:var(--primary-color);">관광지 둘러보기</a></div>';
     }
   }
 
@@ -568,7 +567,7 @@
 
     const attractionId = button.getAttribute('data-attraction-id');
 
-    if (!confirm('정말로 즐겨찾기를 해제하시겠습니까?')) {
+    if (!confirm('정말로 찜하기를 해제하시겠습니까?')) {
       return;
     }
 
@@ -614,14 +613,14 @@
         }, 300);
 
         // 성공 메시지 (선택사항)
-        showToast('즐겨찾기가 해제되었습니다.');
+        showToast('찜 하기가 해제되었습니다.');
       } else {
-        throw new Error(result.message || '즐겨찾기 해제에 실패했습니다.');
+        throw new Error(result.message || '찜 하기 해제에 실패했습니다.');
       }
 
     } catch (error) {
-      console.error('즐겨찾기 해제 중 오류:', error);
-      alert('즐겨찾기 해제 중 오류가 발생했습니다: ' + error.message);
+      console.error('찜 하기 해제 중 오류:', error);
+      alert('찜 하기 해제 중 오류가 발생했습니다: ' + error.message);
 
       // 에러시 버튼 복구
       button.disabled = false;
@@ -644,7 +643,7 @@
     const remainingCards = document.querySelectorAll('.grid .card').length;
 
     if (remainingCards === 0) {
-      grid.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-secondary);">즐겨찾기한 관광지가 없습니다.<br><a href="/attractions" style="color:var(--primary-color);">관광지 둘러보기</a></div>';
+      grid.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-secondary);">찜 한 관광지가 없습니다.<br><a href="/attractions" style="color:var(--primary-color);">관광지 둘러보기</a></div>';
     }
   }
 
