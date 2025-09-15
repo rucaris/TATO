@@ -6,6 +6,7 @@ import com.tato.service.AttractionService;
 import com.tato.service.ReviewService;
 import com.tato.service.UserService;
 import com.tato.model.Attraction;
+import jakarta.validation.constraints.Null;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -50,6 +51,16 @@ public class AttractionController {
                 var user = userRepository.findByEmail(principal.getName()).orElse(null);
                 if (user != null) {
                     model.addAttribute("nickname", user.getNickname());
+                    model.addAttribute("userEmail", user.getEmail());
+                    model.addAttribute("isAdmin", user.getRole().equals("ADMIN"));
+
+                    boolean hasReviewed = reviewService.hasUserReviewedAttraction(user, attraction);
+                    model.addAttribute("hasReviewed", hasReviewed);
+
+                    if (hasReviewed) {
+                        var existingReview = reviewService.findByUserAndAttraction(user, attraction);
+                        model.addAttribute("userReview", existingReview.orElse(null));
+                    }
                 }
             }
 
@@ -58,39 +69,6 @@ public class AttractionController {
             log.error("잘못된 spotId 형식: {}", spotId, e);
             return "redirect:/attractions";
         }
-    }
-
-    // 리뷰 추가
-    @PostMapping("/attractions/{spotId}/reviews")
-    public String addReview(@PathVariable String spotId,
-                            @RequestParam int rating,
-                            @RequestParam String content,
-                            Principal principal,
-                            RedirectAttributes ra) {
-        if (principal == null) return "redirect:/login";
-
-        try {
-            Long id = Long.parseLong(spotId);
-            var attraction = attractionService.findById(id).orElse(null);
-
-            if (attraction == null) {
-                ra.addFlashAttribute("error","관광지를 찾을 수 없습니다.");
-                return "redirect:/attractions";
-            }
-
-            reviewService.addReview(attraction.getId(), content, rating);
-            ra.addFlashAttribute("success","리뷰가 등록되었습니다!");
-
-        } catch (NumberFormatException e) {
-            log.error("잘못된 spotId 형식: {}", spotId, e);
-            ra.addFlashAttribute("error", "올바르지 않은 관광지 ID입니다.");
-            return "redirect:/attractions";
-        } catch (Exception e) {
-            log.error("리뷰 등록 중 오류", e);
-            ra.addFlashAttribute("error", "이미 리뷰를 작성했습니다.");
-        }
-
-        return "redirect:/attractions/" + spotId;
     }
 
     // API 엔드포인트 - 모든 관광지 조회 (index.html에서 사용)

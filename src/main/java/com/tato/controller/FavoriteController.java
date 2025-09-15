@@ -1,6 +1,9 @@
 package com.tato.controller;
 
+import com.tato.model.Attraction;
 import com.tato.model.AttractionProposal;
+import com.tato.model.User;
+import com.tato.repository.AttractionRepository;
 import com.tato.repository.FavoriteRepository;
 import com.tato.service.AttractionProposalService;
 import com.tato.service.FavoriteService;
@@ -8,6 +11,8 @@ import com.tato.service.UserService;
 import com.tato.service.ImageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -29,6 +34,7 @@ public class FavoriteController {
     private final FavoriteRepository favoriteRepository;
     private final ImageService imageService; // 추가
     private final AttractionProposalService attractionProposalService;
+    private final AttractionRepository attractionRepository;
 
     @GetMapping("/favorites")
     public String favoritesPage(Model model, Principal principal) {
@@ -41,7 +47,7 @@ public class FavoriteController {
             model.addAttribute("username", user.getNickname());
             model.addAttribute("userEmail", user.getEmail());
 
-            // ✅ 즐겨찾기 데이터를 템플릿에 맞게 변환
+            // 즐겨찾기 데이터를 템플릿에 맞게 변환
             var favorites = favoriteRepository.findAllByUserId(user.getId());
 
             List<Map<String, Object>> favoriteList = favorites.stream()
@@ -162,6 +168,101 @@ public class FavoriteController {
             ra.addFlashAttribute("submitError",
                     "신청 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
             return "redirect:/favorites#submit";
+        }
+    }
+
+    @GetMapping("/api/favorites/status/{spotId}")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> checkFavoriteStatus(@PathVariable String spotId,
+                                                                   Principal principal) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            if (principal == null) {
+                response.put("favorited", false);
+                response.put("success", true);
+                return ResponseEntity.ok(response);
+            }
+
+            User user = userService.findByEmail(principal.getName());
+
+            // spotId를 Long으로 변환해서 관광지 찾기
+            Long attractionId = Long.parseLong(spotId);
+            Attraction attraction = attractionRepository.findById(attractionId)
+                    .orElseThrow(() -> new RuntimeException("관광지를 찾을 수 없습니다: " + spotId));
+
+            boolean isFavorited = favoriteService.isFavorited(user, attraction);
+
+            response.put("favorited", isFavorited);
+            response.put("success", true);
+
+            return ResponseEntity.ok(response);
+        } catch (NumberFormatException e) {
+            log.error("잘못된 spotId 형식: {}", spotId, e);
+            response.put("favorited", false);
+            response.put("success", false);
+            response.put("message", "올바르지 않은 관광지 ID입니다.");
+            return ResponseEntity.badRequest().body(response);
+        } catch (Exception e) {
+            log.error("찜하기 상태 확인 중 오류", e);
+            response.put("favorited", false);
+            response.put("success", false);
+            response.put("message", "상태 확인에 실패했습니다.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * 찜하기 토글 API 개선 (상세페이지용)
+     */
+    @PostMapping("/favorites/{spotId}")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> toggleFavoriteDetail(@PathVariable String spotId,
+                                                                    Principal principal) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            if (principal == null) {
+                response.put("success", false);
+                response.put("message", "로그인이 필요합니다.");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            }
+
+            User user = userService.findByEmail(principal.getName());
+
+            // spotId를 Long으로 변환
+            Long attractionId = Long.parseLong(spotId);
+            Attraction attraction = attractionRepository.findById(attractionId)
+                    .orElseThrow(() -> new RuntimeException("관광지를 찾을 수 없습니다: " + spotId));
+
+            boolean wasAlreadyFavorited = favoriteService.isFavorited(user, attraction);
+
+            if (wasAlreadyFavorited) {
+                // 찜하기 해제
+                favoriteService.removeFavorite(user, attraction);
+                response.put("favorited", false);
+                response.put("message", "찜하기가 해제되었습니다!");
+            } else {
+                // 찜하기 추가
+                favoriteService.addFavorite(user, attraction);
+                response.put("favorited", true);
+                response.put("message", "찜하기에 추가되었습니다!");
+            }
+
+            response.put("success", true);
+
+            return ResponseEntity.ok(response);
+
+        } catch (NumberFormatException e) {
+            log.error("잘못된 spotId 형식: {}", spotId, e);
+            response.put("success", false);
+            response.put("message", "올바르지 않은 관광지 ID입니다.");
+            return ResponseEntity.badRequest().body(response);
+        } catch (Exception e) {
+            log.error("찜하기 토글 중 오류", e);
+            response.put("success", false);
+            response.put("message", "찜하기 처리에 실패했습니다.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
 
