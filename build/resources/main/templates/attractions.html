@@ -17,9 +17,8 @@
             --border:#e2e8f0; --card-shadow:0 2px 4px rgba(0,0,0,0.1);
         }
         *{margin:0;padding:0;box-sizing:border-box}
-        html,body{min-height:100%;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:var(--background);color:var(--text-primary)}
+        html,body{height:100%;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:var(--background);color:var(--text-primary)}
 
-        /* Header */
         .header{height:64px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:1000;box-shadow:var(--card-shadow)}
         .logo{font-size:24px;font-weight:800;color:var(--primary-color);letter-spacing:-.5px;text-decoration:none}
         .header-nav{display:flex;gap:16px;align-items:center}
@@ -109,7 +108,7 @@
         </span>
 
         <span sec:authorize="isAuthenticated()">
-            <a th:href="@{/favorites}" class="btn">찜하기</a>
+            <a th:href="@{/favorites}" class="btn">찜 목록</a>
             <span th:text="${username}" sec:authentication="name">사용자</span>
             <form th:action="@{/logout}" method="post" style="display:inline;">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
