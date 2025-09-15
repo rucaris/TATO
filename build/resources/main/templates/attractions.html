@@ -31,7 +31,7 @@
         /* Layout */
         .container{display:flex;min-height:calc(100vh - 64px)}
 
-        /* Sidebar */
+        /* 사이드바 - 체크박스 스타일 */
         .sidebar{width:300px;background:#fff;padding:24px;border-right:1px solid var(--border)}
         .listings-count{font-size:48px;font-weight:bold;color:var(--primary-color);margin-bottom:4px}
         .listings-text{color:var(--text-secondary);font-size:14px;margin-bottom:16px}
@@ -47,9 +47,15 @@
 
         /* Main Content */
         .main-content{flex:1;padding:24px}
-        .content-header{margin-bottom:32px}
-        .page-title{font-size:32px;font-weight:700;margin-bottom:8px}
-        .page-subtitle{color:var(--text-secondary);font-size:16px}
+        .content-header{margin-bottom:24px}
+        .page-title{font-size:32px;font-weight:800;margin-bottom:8px}
+        .page-subtitle{color:var(--text-secondary);font-size:16px;margin-bottom:20px}
+
+        /* 정렬 컨트롤 */
+        .controls{display:flex;justify-content:flex-start;align-items:center;margin-bottom:24px;padding:16px;background:#fff;border-radius:12px;box-shadow:var(--card-shadow)}
+        .sort-controls{display:flex;gap:12px;align-items:center}
+        .sort-label{font-weight:600;color:var(--text-primary);font-size:14px}
+        .sort-select{padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:#fff;font-size:14px;cursor:pointer}
 
         /* Attractions Grid */
         .attractions-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:24px;margin-bottom:32px}
@@ -63,15 +69,21 @@
         .card-categories{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}
         .card-category{background:#eff6ff;color:#2563eb;padding:4px 8px;border-radius:12px;font-size:12px;font-weight:500}
         .card-category.primary{background:#2563eb;color:#fff}
-        .card-rating{color:#fbbf24;font-size:14px;margin-bottom:12px}
 
-        /* 즐겨찾기 버튼 스타일 */
-        .card-actions{display:flex;gap:8px;justify-content:space-between;align-items:center}
-        .btn-detail {padding: 6px 12px;border: 1px solid #333;background: transparent;color: #333;border-radius: 4px;font-size: 13px;}
-        .btn-favorite{background:#2563eb;color:#fff;border:none;padding:8px 12px;border-radius:6px;font-size:12px;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:4px}
-        .btn-favorite:hover{background:#1d4ed8;;transform:translateY(-1px)}
-        .btn-favorite.favorited{background:#ef4444;}
-        .btn-favorite.favorited:hover{background:#dc2626;}
+        /* 🔥 별점과 리뷰를 같은 높이 양쪽 끝에 배치 */
+        .card-rating-row{display:flex;justify-content:space-between;align-items:center;margin:12px 0}
+        .card-rating{color:#fbbf24;font-size:14px}
+        .card-review{color:var(--text-secondary);font-size:12px}
+
+        /* 찜하기 버튼 */
+        .card-actions{display:flex;justify-content:center;margin-top:12px}
+        .btn-favorite{background:#2563eb;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:12px;cursor:pointer;transition:all 0.2s}
+        .btn-favorite:hover{background:#1d4ed8;transform:translateY(-1px)}
+        .btn-favorite.favorited{background:#ef4444}
+        .btn-favorite.favorited:hover{background:#dc2626}
+
+        /* 인기 배지 */
+        .popularity-badge{position:absolute;top:12px;left:12px;background:linear-gradient(45deg,#ff6b6b,#ffa726);color:#fff;padding:4px 8px;border-radius:12px;font-size:11px;font-weight:600;box-shadow:0 2px 4px rgba(0,0,0,0.2)}
 
         /* Pagination */
         .pagination{display:flex;justify-content:center;gap:8px;margin-top:32px}
@@ -108,7 +120,7 @@
 </header>
 
 <div class="container">
-    <!-- Sidebar -->
+    <!-- 체크박스 스타일 사이드바 -->
     <aside class="sidebar">
         <div class="listings-count" id="listingsCount">0</div>
         <div class="listings-text">개의 관광지가 검색되었습니다.</div>
@@ -119,13 +131,13 @@
         <!-- Search -->
         <input id="searchInput" class="search-box" placeholder="관광지 이름 검색..." onkeyup="applyFilters()">
 
-        <!-- Categories -->
+        <!-- 체크박스 형태 카테고리 -->
         <h4 class="category-title">카테고리</h4>
         <div id="categoryFilters" class="category-filter">
             <!-- 동적 생성 -->
         </div>
 
-        <!-- 관광지 신청 버튼 추가 -->
+        <!-- 관광지 신청 버튼 -->
         <div sec:authorize="isAuthenticated()" style="margin-top: 24px;">
             <a href="/favorites#submit" class="btn btn-secondary" style="width: 100%; text-align: center; display: block;">
                 관광지 신청하기
@@ -140,6 +152,21 @@
             <p class="page-subtitle">검색/필터로 원하는 장소를 빠르게 찾아보세요</p>
         </div>
 
+        <!-- 정렬 컨트롤 -->
+        <div class="controls">
+            <div class="sort-controls">
+                <span class="sort-label">정렬:</span>
+                <select id="sortSelect" class="sort-select" onchange="applySorting()">
+                    <option value="default">기본순</option>
+                    <option value="popular">인기순 (리뷰 많은 순)</option>
+                    <option value="rating">평점순</option>
+                    <option value="name">이름순</option>
+                    <option value="newest">최신 등록순</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Grid View -->
         <section id="attractionsGrid" class="attractions-grid">
             <div class="empty-state">관광지를 불러오는 중...</div>
         </section>
@@ -154,8 +181,9 @@
     let allAttractions = [], filteredAttractions = [], currentPage = 1;
     const itemsPerPage = 9;
     let selectedCategories = new Set();
+    let currentSort = 'default';
 
-    // 🔥 찜하기 상태 캐시
+    // 찜하기 상태 캐시
     const favoriteCache = new Map();
 
     // 수동 이미지 데이터
@@ -195,11 +223,38 @@
             console.log('데이터 로딩 완료. 검색 가능 상태.');
         })
         .catch(error => {
-            console.error('데이터 로딩 실패:', error);
+            console.error('Error loading attractions:', error);
             document.getElementById('attractionsGrid').innerHTML =
-                '<div class="empty-state">데이터를 불러오는데 실패했습니다.</div>';
+                '<div class="empty-state">관광지 데이터를 불러오는데 실패했습니다.</div>';
         });
 
+    // 🔥 정렬 함수
+    function applySorting() {
+        currentSort = document.getElementById('sortSelect').value;
+
+        filteredAttractions = [...filteredAttractions].sort((a, b) => {
+            switch(currentSort) {
+                case 'popular':
+                    return (b.reviewCount || 0) - (a.reviewCount || 0);
+                case 'rating':
+                    return (b.averageRating || 0) - (a.averageRating || 0);
+                case 'name':
+                    return a.name.localeCompare(b.name);
+                case 'newest':
+                    return b.id - a.id;
+                case 'default':
+                    return a.id - b.id;
+                default:
+                    return a.id - b.id;
+            }
+        });
+
+        currentPage = 1;
+        renderAttractions();
+        renderPagination();
+    }
+
+    // 체크박스 형태 카테고리 설정
     function setupCategories() {
         const allCategories = new Set();
 
@@ -246,241 +301,197 @@
             return matchesSearch && matchesCategory;
         });
 
-        currentPage = 1;
+        applySorting();
         updateListingsCount();
-        renderAttractions();
-        renderPagination();
     }
 
     function updateListingsCount() {
         document.getElementById('listingsCount').textContent = filteredAttractions.length;
     }
 
+    function showAll() {
+        selectedCategories.clear();
+        document.getElementById('searchInput').value = '';
+        document.querySelectorAll('.category-item input').forEach(input => input.checked = false);
+
+        filteredAttractions = [...allAttractions];
+        applySorting();
+        updateListingsCount();
+    }
+
+    // 찜하기 기능
+    async function toggleFavorite(attractionId, event) {
+        event.stopPropagation();
+
+        try {
+            const response = await fetch('/api/favorites/toggle', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]').getAttribute('content')
+                },
+                body: JSON.stringify({ attractionId: attractionId })
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                const button = document.querySelector(`[data-attraction-id="${attractionId}"] .btn-favorite`);
+
+                if (result.favorited) {
+                    button.textContent = '찜해제';
+                    button.classList.add('favorited');
+                } else {
+                    button.textContent = '찜하기';
+                    button.classList.remove('favorited');
+                }
+
+                favoriteCache.set(attractionId, result.favorited);
+            } else if (response.status === 401) {
+                alert('로그인이 필요합니다.');
+                window.location.href = '/login';
+            }
+        } catch (error) {
+            console.error('찜하기 처리 중 오류:', error);
+        }
+    }
+
+    // 찜하기 상태 확인
+    async function loadFavoriteStatuses() {
+        try {
+            const response = await fetch('/api/favorites/status/all');
+            if (response.ok) {
+                const favorites = await response.json();
+                favorites.forEach(fav => {
+                    favoriteCache.set(fav.attractionId, true);
+                });
+            }
+        } catch (error) {
+            console.log('찜하기 상태 로딩 중 오류:', error);
+        }
+    }
+
     function renderAttractions() {
-        const container = document.getElementById('attractionsGrid');
         const startIndex = (currentPage - 1) * itemsPerPage;
         const endIndex = startIndex + itemsPerPage;
         const pageAttractions = filteredAttractions.slice(startIndex, endIndex);
 
+        const gridContainer = document.getElementById('attractionsGrid');
+
         if (pageAttractions.length === 0) {
-            container.innerHTML = '<div class="empty-state">검색 결과가 없습니다</div>';
+            gridContainer.innerHTML = '<div class="empty-state">검색 조건에 맞는 관광지가 없습니다.</div>';
             return;
         }
 
-        container.innerHTML = pageAttractions.map(attraction => {
-            const rating = 5.0;
-            const imageUrl = manualData.images[attraction.id];
-            const stars = '★★★★★';
-
-            let categoryTags = '';
-            if (attraction.category) {
-                try {
-                    const categories = attraction.category.split(',').map(c => c.trim()).filter(c => c);
-                    categoryTags = categories.map((category, index) =>
-                        `<span class="card-category${index === 0 ? ' primary' : ''}">${escapeHtml(category)}</span>`
-                    ).join('');
-                } catch (error) {
-                    console.error('카테고리 파싱 오류:', error);
-                    categoryTags = '<span class="card-category">기타</span>';
-                }
-            } else {
-                categoryTags = '<span class="card-category">기타</span>';
-            }
+        gridContainer.innerHTML = pageAttractions.map(attraction => {
+            const imageUrl = manualData.images[attraction.id] || null;
+            const categories = attraction.category ? attraction.category.split(',').map(cat => cat.trim()) : [];
+            const isPopular = (attraction.reviewCount || 0) >= 5;
+            const isFavorited = favoriteCache.get(attraction.id) || false;
 
             return `
-            <div class="attraction-card">
-                <div class="card-image" onclick="goToDetail('${attraction.id}')">
-                    ${imageUrl ?
-                `<img src="${imageUrl}" alt="${escapeHtml(attraction.name)}" />` :
-                '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#666;">📍</div>'
-            }
-                </div>
-                <div class="card-content">
-                    <div class="card-title" onclick="goToDetail('${attraction.id}')">${escapeHtml(attraction.name)}</div>
-                    <div class="card-meta">${escapeHtml(attraction.address || '')}</div>
-                    <div class="card-categories">${categoryTags}</div>
-                    <div class="card-rating">${stars} ${rating}</div>
+                <div class="attraction-card" data-attraction-id="${attraction.id}">
+                    ${isPopular ? '<div class="popularity-badge">인기</div>' : ''}
 
-                    <div class="card-actions">
-                        <button class="btn-favorite"
-                                onclick="toggleFavorite(${attraction.id}, this)"
-                                data-attraction-id="${attraction.id}">
-                            찜하기
-                        </button>
+                    <div class="card-image" onclick="location.href='/attractions/${attraction.id}'">
+                        ${imageUrl ?
+                `<img src="${imageUrl}" alt="${attraction.name}">` :
+                '<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:48px;color:var(--text-secondary);">📍</div>'
+            }
+                    </div>
+                    <div class="card-content" onclick="location.href='/attractions/${attraction.id}'">
+                        <h3 class="card-title">${attraction.name}</h3>
+                        <p class="card-meta">${attraction.address || '주소 정보 없음'}</p>
+                        <div class="card-categories">
+                            ${categories.map((cat, index) =>
+                `<span class="card-category ${index === 0 ? 'primary' : ''}">${cat}</span>`
+            ).join('')}
+                        </div>
+
+                        <!-- 🔥 별점, 리뷰, 찜하기 버튼 순서로 배치 -->
+                        <div class="card-rating-row">
+                            <div class="card-rating">
+                                ${attraction.averageRating ?
+                `★ ${attraction.averageRating.toFixed(1)}` :
+                '평점 없음'
+            }
+                            </div>
+
+                            <div class="card-review">
+                                리뷰 ${attraction.reviewCount || 0}개
+                            </div>
+
+                            <button class="btn-favorite ${isFavorited ? 'favorited' : ''}"
+                                    onclick="toggleFavorite(${attraction.id}, event)">
+                                ${isFavorited ? '찜해제' : '찜하기'}
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
             `;
         }).join('');
-
-        setTimeout(() => {
-            checkAllFavoriteStatusInList();
-        }, 100);
-    }
-
-    async function checkAllFavoriteStatusInList() {
-        const buttons = document.querySelectorAll('.btn-favorite[data-attraction-id]');
-
-        for (const button of buttons) {
-            const attractionId = button.getAttribute('data-attraction-id');
-            if (attractionId) {
-                await checkFavoriteStatusForButton(button, attractionId);
-            }
-        }
-    }
-
-    async function checkFavoriteStatusForButton(button, attractionId) {
-        if (favoriteCache.has(attractionId)) {
-            updateButtonAppearance(button, favoriteCache.get(attractionId));
-            return;
-        }
-
-        try {
-            const response = await fetch(`/api/favorites/status/${attractionId}`);
-            if (response.ok) {
-                const result = await response.json();
-                const isFavorited = result.favorited || false;
-
-                favoriteCache.set(attractionId, isFavorited);
-                updateButtonAppearance(button, isFavorited);
-            }
-        } catch (error) {
-            console.log('찜 상태 확인 중 오류:', error);
-        }
-    }
-
-    function updateButtonAppearance(button, isFavorited) {
-        if (isFavorited) {
-            button.textContent = '찜 해제';
-            button.classList.add('favorited');
-            button.style.background = '#ef4444'; // 빨간색
-            button.style.color = 'white';
-        } else {
-            button.textContent = '찜하기';
-            button.classList.remove('favorited');
-            button.style.background = '#2563eb'; // 파란색
-            button.style.color = 'white';
-        }
-    }
-
-    async function toggleFavorite(attractionId, button) {
-        const isLoggedIn = document.querySelector('span[sec\\:authorize="isAuthenticated()"]') ||
-            document.querySelector('input[name="_csrf"]');
-
-        if (!isLoggedIn) {
-            alert('로그인이 필요합니다.');
-            window.location.href = '/login';
-            return;
-        }
-
-        try {
-            const csrf = getCsrfToken();
-            const headers = {
-                'Content-Type': 'application/json',
-            };
-
-            if (csrf.token && csrf.header) {
-                headers[csrf.header] = csrf.token;
-            }
-
-            button.disabled = true;
-            button.textContent = '처리중...';
-
-            const response = await fetch(`/favorites/${attractionId}`, {
-                method: 'POST',
-                headers: headers
-            });
-
-            if (!response.ok) {
-                if (response.status === 401 || response.status === 403) {
-                    alert('로그인이 필요합니다.');
-                    window.location.href = '/login';
-                    return;
-                }
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const result = await response.json();
-
-            if (result.success) {
-                const message = result.favorited ? '찜하기 완료' : '찜하기 해제';
-                alert(message);
-
-                favoriteCache.set(attractionId.toString(), result.favorited);
-
-                updateButtonAppearance(button, result.favorited);
-
-            } else {
-                alert(result.message || '오류가 발생했습니다.');
-                // 실패 시 버튼 복구
-                checkFavoriteStatusForButton(button, attractionId);
-            }
-
-        } catch (error) {
-            console.error('찜하기 처리 중 오류:', error);
-            alert('네트워크 오류가 발생했습니다: ' + error.message);
-            // 에러 시 버튼 복구
-            checkFavoriteStatusForButton(button, attractionId);
-        } finally {
-            button.disabled = false;
-        }
     }
 
     function renderPagination() {
-        const container = document.getElementById('pagination');
         const totalPages = Math.ceil(filteredAttractions.length / itemsPerPage);
+        const paginationContainer = document.getElementById('pagination');
 
         if (totalPages <= 1) {
-            container.style.display = 'none';
+            paginationContainer.style.display = 'none';
             return;
         }
 
-        container.style.display = 'flex';
+        paginationContainer.style.display = 'flex';
+
         let paginationHTML = '';
 
-        for (let i = 1; i <= totalPages; i++) {
-            paginationHTML += `
-                <button class="${i === currentPage ? 'active' : ''}"
-                        onclick="changePage(${i})">${i}</button>
-            `;
+        if (currentPage > 1) {
+            paginationHTML += `<button onclick="changePage(${currentPage - 1})">‹ 이전</button>`;
         }
 
-        container.innerHTML = paginationHTML;
+        for (let i = 1; i <= totalPages; i++) {
+            if (i === currentPage) {
+                paginationHTML += `<button class="active">${i}</button>`;
+            } else {
+                paginationHTML += `<button onclick="changePage(${i})">${i}</button>`;
+            }
+        }
+
+        if (currentPage < totalPages) {
+            paginationHTML += `<button onclick="changePage(${currentPage + 1})">다음 ›</button>`;
+        }
+
+        paginationContainer.innerHTML = paginationHTML;
     }
 
     function changePage(page) {
         currentPage = page;
         renderAttractions();
         renderPagination();
+
+        document.querySelector('.main-content').scrollIntoView({ behavior: 'smooth' });
     }
 
-    function showAll() {
-        selectedCategories.clear();
-        document.getElementById('searchInput').value = '';
-        document.querySelectorAll('#categoryFilters input').forEach(input => {
-            input.checked = false;
-        });
-        applyFilters();
-    }
-
-    function goToDetail(id) {
-        window.location.href = `/attractions/${id}`;
-    }
-
-    function getCsrfToken() {
-        const csrfToken = document.querySelector('meta[name="_csrf"]');
-        const csrfHeader = document.querySelector('meta[name="_csrf_header"]');
-        return {
-            token: csrfToken ? csrfToken.getAttribute('content') : null,
-            header: csrfHeader ? csrfHeader.getAttribute('content') : null
-        };
-    }
-
+    // HTML 이스케이프 함수
     function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, function(m) { return map[m]; });
     }
+
+    // 초기화
+    document.addEventListener('DOMContentLoaded', function() {
+        loadFavoriteStatuses().then(() => {
+            renderAttractions();
+        });
+
+        document.getElementById('sortSelect').value = 'default';
+    });
 </script>
 
 </body>
