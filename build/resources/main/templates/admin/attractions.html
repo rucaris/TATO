@@ -63,20 +63,26 @@
       padding: 0;
     }
     .admin-nav li {
-      margin-bottom: 10px;
+      margin-bottom: 0; /* Remove spacing */
     }
     .admin-nav li a {
       display: block;
-      padding: 10px 15px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
+      padding: 12px 20px;
       text-decoration: none;
-      color: var(--text);
-      background-color: #fff;
-      transition: background-color 0.15s ease;
+      color: var(--muted);
+      background-color: transparent;
+      transition: all 0.2s ease;
+      border-left: 3px solid transparent;
     }
     .admin-nav li a:hover {
       background-color: var(--bg);
+      color: var(--text);
+    }
+    .admin-nav li a.active {
+      background-color: #eff6ff;
+      color: var(--primary);
+      font-weight: 600;
+      border-left-color: var(--primary);
     }
 
     .admin-table {
@@ -191,6 +197,46 @@
       margin-right: 10px;
     }
 
+    /* Modal Content Style Update */
+    .modal-content {
+      padding: 24px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: #fff;
+      box-shadow: 0 8px 24px -8px rgb(0 0 0 / .12);
+    }
+
+    /* Modal Form Elements Style Update */
+    .modal-content label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+    .modal-content .input,
+    .modal-content select,
+    .modal-content textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fff;
+      font-size: 14px;
+      margin-top: 4px; /* Add some space */
+      margin-bottom: 8px; /* Add some space */
+    }
+    .modal-content .input:focus,
+    .modal-content select:focus,
+    .modal-content textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgb(37 99 235 / .12);
+    }
+    .modal-content textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
     .attraction-list-container {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -221,12 +267,8 @@
       margin-bottom: 10px;
     }
     .attraction-card .attraction-address {
-      display: inline-block;
-      background: var(--primary);
-      color: #fff;
-      border-radius: 999px;
-      padding: 4px 10px;
       font-size: 0.8em;
+      margin-bottom: 10px;
     }
   </style>
 </head>
@@ -240,20 +282,20 @@
       <nav>
         <ul class="admin-nav">
           <li><a th:href="@{/admin/users}">사용자 관리</a></li>
-          <li><a th:href="@{/admin/attractions}">관광지 관리</a></li>
-          <li><a th:href="@{/admin/settings}">설정</a></li>
+          <li><a th:href="@{/admin/attractions}" class="active">관광지 관리</a></li>
+          <li><a th:href="@{/admin/settings}">관광지 등록 요청 관리</a></li>
         </ul>
       </nav>
     </section>
   </aside>
   <section style="padding:20px 24px;">
     <h1>관광지 관리</h1>
-    <button type="button" class="btn primary" id="newAttractionBtn" style="margin-bottom: 20px;">새 관광지 추가</button>
+    <button type="button" class="btn primary" id="newAttractionBtn" style="margin-top: 20px; margin-bottom: 20px;">새 관광지 추가</button>
     <div class="attraction-list-container">
       <div class="attraction-card" th:each="attraction : ${attractions}" th:data-attraction-id="${attraction.id}">
         <div class="attraction-name" th:text="${attraction.name}"></div>
         <div class="attraction-category" th:text="${attraction.category}"></div>
-        <span class="attraction-address" th:text="${attraction.address}"></span>
+        <div class="attraction-address" th:text="${attraction.address}"></div>
       </div>
     </div>
     <p th:if="${#lists.isEmpty(attractions)}">관광지가 없습니다.</p>
@@ -288,6 +330,10 @@
       <p>
         <label for="attractionDescription">설명:</label>
         <textarea id="attractionDescription" name="description" class="input" rows="5"></textarea>
+      </p>
+      <p>
+        <label for="attractionWebsite">홈페이지:</label>
+        <input type="url" id="attractionWebsite" name="website" class="input" placeholder="https://example.com">
       </p>
       <div class="modal-buttons">
         <button type="button" class="btn primary" id="saveAttractionBtn">저장</button>

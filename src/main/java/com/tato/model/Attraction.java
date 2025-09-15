@@ -20,6 +20,11 @@ public class Attraction {
   private String imageUrl; //이미지 삽입 위해 추가했습니다.
   @Column(length=300) private String operatingHours;
   @Column(length=200) private String closedDays;
+  @Column(length=500)
+  private String website;
+
+  public String getWebsite() { return website; }
+  public void setWebsite(String website) { this.website = website; }
 
   @PrePersist
   @PreUpdate
