@@ -219,13 +219,13 @@
   <h1 class="page-title">마이페이지</h1>
 
   <section class="stats">
-    <div><h3>총 즐겨찾기</h3><strong th:text="${favoritesCount}">0</strong></div>
+    <div><h3>총 찜 목록</h3><strong th:text="${favoritesCount}">0</strong></div>
     <div><a th:href="@{/attractions}" class="btn btn-primary">관광지 더 보러가기</a></div>
   </section>
 
   <!-- 탭 네비게이션 -->
   <div class="tabs">
-    <button class="tab-button active" onclick="switchTab('favorites')">내 즐겨찾기</button>
+    <button class="tab-button active" onclick="switchTab('favorites')">내 찜 목록</button>
     <button class="tab-button" onclick="switchTab('submit')">관광지 신청</button>
   </div>
 

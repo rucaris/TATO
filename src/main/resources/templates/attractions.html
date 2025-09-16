@@ -401,12 +401,13 @@
                         <h3 class="card-title">${attraction.name}</h3>
                         <p class="card-meta">${attraction.address || '주소 정보 없음'}</p>
                         <div class="card-categories">
-                            ${categories.map((cat, index) =>
-                `<span class="card-category ${index === 0 ? 'primary' : ''}">${cat}</span>`
-            ).join('')}
+                            ${categories.map((cat, index) => {
+                const isPrimary = selectedCategories.size > 0 ? selectedCategories.has(cat) : index === 0;
+                return `<span class="card-category ${isPrimary ? 'primary' : ''}">${cat}</span>`;
+            }).join('')}
                         </div>
 
-                        <!-- 🔥 별점, 리뷰, 찜하기 버튼 순서로 배치 -->
+                        <!-- 별점, 리뷰, 찜하기 버튼 순서로 배치 -->
                         <div class="card-rating-row">
                             <div class="card-rating">
                                 ${attraction.averageRating ?

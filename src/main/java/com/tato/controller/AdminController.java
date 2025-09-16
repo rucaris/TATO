@@ -14,7 +14,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Controller
@@ -136,11 +138,26 @@ public class AdminController {
 
     @GetMapping("/api/admin/attraction-requests/{id}")
     @ResponseBody
-    public ResponseEntity<AttractionProposal> getAttractionProposalDetails(@PathVariable Long id) {
+    public ResponseEntity<Map<String, Object>> getAttractionProposalDetails(@PathVariable Long id) {
         try {
             AttractionProposal proposal = attractionProposalService.findProposalById(id)
                     .orElseThrow(() -> new IllegalArgumentException("Attraction Proposal not found with ID: " + id));
-            return ResponseEntity.ok(proposal);
+            User user = userService.findUserById(proposal.getUserId());
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("id", proposal.getId());
+            response.put("name", proposal.getName());
+            response.put("category", proposal.getCategory());
+            response.put("address", proposal.getAddress());
+            response.put("latitude", proposal.getLatitude());
+            response.put("longitude", proposal.getLongitude());
+            response.put("description", proposal.getDescription());
+            response.put("status", proposal.getStatus());
+            response.put("requestDate", proposal.getRequestDate());
+            response.put("userId", proposal.getUserId());
+            response.put("applicantNickname", user.getNickname());
+
+            return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.notFound().build();
         }
@@ -155,11 +172,11 @@ public class AdminController {
             } else if ("REJECTED".equals(statusUpdateDto.getStatus())) {
                 attractionProposalService.rejectProposal(id);
             } else {
-                return ResponseEntity.badRequest().body(null); // Invalid status
+                return ResponseEntity.badRequest().body(null);
             }
             return ResponseEntity.ok().build();
         } catch (IllegalArgumentException | IllegalStateException e) {
-            return ResponseEntity.badRequest().body(null); // Or a more specific error message
+            return ResponseEntity.badRequest().body(null);
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
